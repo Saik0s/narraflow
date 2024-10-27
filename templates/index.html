@@ -322,10 +322,20 @@
                     </div>
                   `;
                   document.body.appendChild(notification);
-                  setTimeout(() => notification.remove(), 3000);
+                  // Ensure notification is removed even if user navigates away
+                  const timeoutId = setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                      notification.remove();
+                    }
+                  }, 3000);
+                  // Clean up timeout if notification is removed early
+                  notification.addEventListener('click', () => {
+                    clearTimeout(timeoutId);
+                    notification.remove();
+                  });
                 }
               }"
-              @submit.prevent="handleSendMessage">
+              @submit.prevent="handleSendMessage()">
           <input type="text" 
                  x-model="message"
                  placeholder="Type your message..." 
