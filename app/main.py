@@ -50,11 +50,11 @@ async def root(request: Request):
 @app.post("/api/chat")
 async def chat(chat_message: NewChatMessage):
     try:
-        logger.info(f"Received chat request: {chat_message.model_dump_json(indent=2)}")
+        logger.info(f"Received chat request")
 
         response = await process_chat(chat_message)
 
-        logger.info(f"Generated response: {response.model_dump_json(indent=2)}")
+        logger.info(f"Generated response")
 
         response.messages.insert(
             0,
@@ -85,10 +85,10 @@ async def chat(chat_message: NewChatMessage):
 @app.post("/api/image/generate", response_model=ImageResponse)
 async def generate_image_endpoint(imageGen: ImageGenerationRequest):
     try:
-        logger.info(f"Received image generation request: {imageGen}")
+        logger.info(f"Received image generation request")
         prompt = await generate_prompt(imageGen)
         urls = await generate_image(prompt)
-        logger.info(f"Generated image response: {urls}")
+        logger.info(f"Generated image response")
         return ImageResponse(urls=urls, prompt=prompt.positive)
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
@@ -98,7 +98,7 @@ async def generate_image_endpoint(imageGen: ImageGenerationRequest):
 @app.post("/api/image/comfyui", response_model=ImageResponse)
 async def generate_image_endpoint(comfyGen: ComfyWorkflowRequest):
     try:
-        logger.info(f"Received image generation request: {comfyGen}")
+        logger.info(f"Received image generation request")
         prompt = await generate_prompt(ImageGenerationRequest(**comfyGen.model_dump()))
         workflow_json = json.dumps(comfyGen.workflow)
         workflow_json = workflow_json.replace(

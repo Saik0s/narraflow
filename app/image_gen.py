@@ -75,7 +75,7 @@ class ImagePromptDetails(BaseModel):
     )
     negative_prompt: str = Field(
         ...,
-        description="List of elements to explicitly exclude from the image, such as unwanted objects, styles, or characteristics",
+        description="List of elements to avoid including in the image, such as specific objects, styles, or characteristics",
     )
 
     def to_prompt(self) -> ImagePrompt:
