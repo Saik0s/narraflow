@@ -103,3 +103,8 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+from .audio_gen import AudioGenerationRequest, AudioResponse, generate_audio
+
+@app.post("/api/audio/generate", response_model=AudioResponse)
+async def generate_audio_endpoint(request: AudioGenerationRequest):
+    return await generate_audio(request.text)

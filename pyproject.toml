@@ -25,3 +25,6 @@ elevenlabs = "^1.11.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+elevenlabs = "^0.2.24"
+minio = "^7.1.15"
