@@ -37,6 +37,16 @@ async def chat_endpoint(message: ChatMessage):
         return {"error": f"Error processing message: {str(e)}"}, 500
 
 
+@app.post("/api/image/generate")
+async def generate_image_endpoint(prompt: ImagePrompt):
+    try:
+        logger.info("Processing image generation request")
+        image_response = await generate_image(prompt)
+        return image_response
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        return {"error": f"Error generating image: {str(e)}"}, 500
+
 @app.post("/api/image/reaction")
 async def image_reaction(reaction: ImageReaction):
     try:
