@@ -23,9 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.models import AudioGenerationRequest, AudioResponse
 from app.audio_gen import generate_audio
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_logging()
 
 app = FastAPI()
 
