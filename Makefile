@@ -14,7 +14,7 @@ clean:
 	docker system prune -f
 
 install:
-	poetry install
+	poetry install --no-root
 
 dev:
 	poetry run uvicorn app.main:app --reload

@@ -1,18 +1,12 @@
-[project]
-name = "narraflow"
-version = "0.1.0"
-description = "A web application that enables interactive storytelling with real-time AI-generated illustrations, featuring a chat interface and dynamic keyword suggestions."
-
 [tool.poetry]
 name = "narraflow"
 version = "0.1.0"
 description = "A web application that enables interactive storytelling with real-time AI-generated illustrations, featuring a chat interface and dynamic keyword suggestions."
 authors = ["Igor Tarasenko <tarasenko.igor.v@gmail.com>"]
 readme = "README.md"
-package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 fal-client = "^0.5.4"
 fastapi = "^0.115.3"
 instructor = "^1.6.3"
