@@ -22,7 +22,6 @@ app = FastAPI()
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
 
 # Add this class after the imports

@@ -13,9 +13,7 @@
             {% endfor %}
         </div>
         <div class="edit-controls">
-            <button hx-delete="/api/messages/{{ message.id }}"
-                    hx-confirm="Are you sure you want to delete this message?"
-                    class="btn btn-ghost btn-sm">
+            <button class="btn btn-ghost btn-sm">
                 <i class="fas fa-trash"></i> Delete
             </button>
         </div>
