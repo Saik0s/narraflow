@@ -195,3 +195,19 @@ img:not(.lazy) {
 .transition-opacity {
     transition: opacity 0.3s ease-in-out;
 }
+
+/* Dropdown styles */
+.dropdown-content {
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.dropdown-content p {
+    white-space: normal;
+}
+
+/* Ensure the dropdown stays visible while hovering */
+.dropdown:hover .dropdown-content {
+    visibility: visible;
+    opacity: 1;
+}
