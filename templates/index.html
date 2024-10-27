@@ -29,35 +29,29 @@
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
-        <button id="clear-history" class="btn btn-ghost">Clear History</button>
+        <button id="clear-history" class="btn btn-ghost" @click="$store.app.clearState()">Clear History</button>
       </div>
       <div class="flex-none">
         <!-- Add divider -->
         <div class="divider divider-horizontal"></div>
 
         <!-- Image Controls -->
-        <div class="dropdown dropdown-end">
-          <label tabindex="0" class="btn btn-ghost m-1">
-            <i class="fas fa-image"></i>
-            <span class="ml-2">Image Settings</span>
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" id="image-gen-enabled" class="checkbox checkbox-primary" checked />
+            <span class="label-text">Enable Image Generation</span>
           </label>
-          <div tabindex="0" class="dropdown-content z-[1] menu p-4 shadow bg-base-200 rounded-box w-72">
-            <div class="form-control">
-              <label class="label cursor-pointer justify-start gap-4">
-                <input type="checkbox" id="image-gen-enabled" class="checkbox checkbox-primary" checked />
-                <span class="label-text">Enable Image Generation</span>
-              </label>
-            </div>
-            <select id="image-gen-mode" class="select select-bordered w-full mt-2">
-              <option value="after_chat">After Each Chat</option>
-              <option value="periodic">Periodic</option>
-            </select>
-            <div id="interval-setting" class="form-control mt-2" style="display: none;">
-              <label class="input-group">
-                <input type="number" id="interval-input" min="5" value="30" class="input input-bordered w-20" />
-                <span>seconds</span>
-              </label>
-            </div>
+
+          <select id="image-gen-mode" class="select select-bordered">
+            <option value="after_chat">After Each Chat</option>
+            <option value="periodic">Periodic</option>
+          </select>
+
+          <div id="interval-setting" class="form-control" style="display: none;">
+            <label class="input-group">
+              <input type="number" id="interval-input" min="5" value="30" class="input input-bordered w-20" />
+              <span>seconds</span>
+            </label>
           </div>
         </div>
 

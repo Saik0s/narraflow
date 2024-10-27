@@ -24,7 +24,29 @@ document.addEventListener('alpine:init', () => {
       interval_seconds: 30
     },
 
+    clearState() {
+      this.chatHistory = [];
+      this.imageHistory = [];
+      this.keywords = [];
+      this.selectedKeywords = [];
+      this.currentInput = '';
+      this.saveState();
+    },
+
     init() {
+      // ... existing initialization code ...
+
+      // Handle visibility of interval setting
+      const imageGenMode = document.getElementById('image-gen-mode');
+      const intervalSetting = document.getElementById('interval-setting');
+
+      imageGenMode.addEventListener('change', (event) => {
+        if (event.target.value === 'periodic') {
+          intervalSetting.style.display = 'block';
+        } else {
+          intervalSetting.style.display = 'none';
+        }
+      });
       this.loadFromStorage();
       this.applyTheme(this.theme);
     },
