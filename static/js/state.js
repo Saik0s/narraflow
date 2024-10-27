@@ -9,6 +9,7 @@ export class AppState {
     this.isProcessing = false;
     this.lastImageGeneration = 0;
     this.currentlyEditingMessageIndex = null;
+    this.selectedAuthor = ''; // Add selected author tracking, default to empty string (Direct)
 
     // Add image settings with defaults
     this.imageSettings = {
@@ -69,32 +70,6 @@ export class AppState {
     localStorage.removeItem('appState');
   }
 
-  addMessage(message) {
-    if (!message?.id) return;
-
-    this.chatHistory = [
-      ...this.chatHistory.filter(msg => msg.id !== message.id),
-      message
-    ];
-    this.saveState();
-  }
-
-  updateMessage(id, content) {
-    const message = this.chatHistory.find(msg => msg.id === id);
-    if (message?.messages?.[0]) {
-      message.messages[0].content = content;
-      this.saveState();
-    }
-  }
-
-  deleteMessage(id) {
-    const initialLength = this.chatHistory.length;
-    this.chatHistory = this.chatHistory.filter(msg => msg.id !== id);
-    if (this.chatHistory.length !== initialLength) {
-      this.saveState();
-    }
-  }
-
   setTheme(theme) {
     this.theme = theme;
     document.documentElement.setAttribute('data-theme', theme);
@@ -105,4 +80,3 @@ export class AppState {
 
 // Create and export a single instance
 export const appState = new AppState();
-

@@ -33,6 +33,4 @@ async def generate_image(prompt: ImagePrompt) -> ImageResponse:
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error generating image: {error_msg}")
-        return ImageResponse(
-            image_url="https://via.placeholder.com/512x512.png?text=Error+Generating+Image"
-        )
+        raise e

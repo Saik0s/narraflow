@@ -45,17 +45,18 @@
       <div class="card-body h-full p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
           <!-- Chat Column -->
-          <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+          <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Chat History</h2>
-            <div id="chat-messages" class="flex-1 overflow-y-auto min-h-0 pb-4">
+            <!-- Remove the fixed calc and rely on flex -->
+            <div id="chat-messages" class="flex-1 min-h-0 pb-4">
               <!-- Chat messages will be inserted here -->
             </div>
           </div>
 
           <!-- Images Column -->
-          <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+          <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
-            <div id="images-container" class="flex-1 overflow-y-auto min-h-0 pb-4">
+            <div id="images-container" class="flex-1 min-h-0 pb-4">
               <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
             </div>
             <!-- Image Controls -->

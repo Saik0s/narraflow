@@ -19,17 +19,18 @@ async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
     if chat_data.history:
         starting_role = "assistant" if len(chat_data.history) % 2 == 0 else "user"
         for i, msg in enumerate(chat_data.history):
-            # Ensure we're working with Message objects
-            if isinstance(msg, dict):
-                msg = Message(**msg)
             role = "user" if (i % 2 == 0) == (starting_role == "user") else "assistant"
-            messages.append({"role": role, "content": f"{msg.author}: {msg.content}"})
+            content = f"{msg.author}: {msg.content}" if msg.author else msg.content
+            messages.append({"role": role, "content": content})
 
     # Add current message
+    current_content = chat_data.content
+    if chat_data.author:
+        current_content = f"{chat_data.author}: {current_content}"
     messages.append(
         {
             "role": "user",
-            "content": f"{chat_data.author}: {chat_data.content}\n\n* selected keywords: {', '.join(chat_data.selectedKeywords)} *",
+            "content": f"{current_content}\n\n* selected keywords: {', '.join(chat_data.selectedKeywords)} *",
         }
     )
 
@@ -66,13 +67,4 @@ async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
     except Exception as e:
         error_msg = f"Error in process_chat: {str(e)}"
         logger.error(error_msg)
-        # Return a graceful fallback response that matches the model structure
-        return LLMResponse(
-            messages=[
-                LLMMessage(
-                    author="system",
-                    content="There was an error generating the story response. Please try again.",
-                )
-            ],
-            keywords=[LLMKeyword(category="plot", text="story-interrupted")],
-        )
+        raise e

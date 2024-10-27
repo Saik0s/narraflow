@@ -81,8 +81,9 @@ export class UI {
   async handleSendMessage() {
     const messageInput = this.elements.messageInput;
     const content = messageInput?.value.trim();
-    const authorInput = document.querySelector('input[name="author"]:checked');
-    const author = authorInput ? authorInput.value : '';
+
+    // Use the stored selectedAuthor instead of getting it from DOM
+    const author = appState.selectedAuthor;
 
     if (!content || appState.isProcessing) return;
 
@@ -126,25 +127,43 @@ export class UI {
     this.elements.chatMessages.innerHTML = '';
 
     appState.chatHistory.forEach((message, index) => {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = 'message';
-      messageDiv.dataset.id = index.toString();
+      const messageWrapper = document.createElement('div');
+      messageWrapper.className = message.author.toLowerCase() === 'user' ? 'chat chat-end' : 'chat chat-start';
+      messageWrapper.dataset.id = index.toString();
 
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'message-content';
+      const chatHeader = document.createElement('div');
+      chatHeader.className = 'chat-header text-xs text-base-content/40';
+      chatHeader.textContent = message.author;
 
-      const text = document.createElement('p');
-      text.className = `message-text ${message.author.toLowerCase()}`;
-      text.textContent = message.author === 'thoughts' ?
-        message.content :
-        `${message.author}: ${message.content}`;
-      contentDiv.appendChild(text);
+      const messageBubble = document.createElement('div');
+      const getAuthorColorClass = (author) => {
+        switch (author.toLowerCase()) {
+          case 'thoughts':
+            return 'bg-base/5 text-base-content/50';
+          case 'system':
+            return 'bg-base/5 text-base-content/50';
+          case 'narrator':
+            return 'bg-base/5 text-base-content/50';
+          default:
+            // Generate a unique color based on the author's name
+            const hash = author.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+            const hue = hash % 360;
+            return `bg-[hsl(${hue},10%,20%)] text-[hsl(${hue},60%,80%)]`;
+        }
+      };
 
-      const controls = this.createMessageControls(messageDiv.dataset.id);
+      messageBubble.className = `chat-bubble ${getAuthorColorClass(message.author)}`;
 
-      messageDiv.appendChild(contentDiv);
-      messageDiv.appendChild(controls);
-      this.elements.chatMessages.appendChild(messageDiv);
+      messageBubble.textContent = message.content;
+      const controls = this.createMessageControls(index);
+      controls.className += ' opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -top-7 right-0 mb-2 mr-2';
+
+      messageWrapper.classList.add('group', 'relative');
+      messageBubble.appendChild(controls);
+
+      messageWrapper.appendChild(chatHeader);
+      messageWrapper.appendChild(messageBubble);
+      this.elements.chatMessages.appendChild(messageWrapper);
     });
 
     // Scroll to bottom
@@ -154,22 +173,22 @@ export class UI {
   }
 
   // Helper to create message controls
-  createMessageControls(messageId) {
+  createMessageControls(index) {
     const controls = document.createElement('div');
     controls.className = 'edit-controls';
     controls.innerHTML = `
-      <button class="btn btn-ghost btn-sm edit-button">
-        <i class="fas fa-edit"></i> Edit
+      <button class="btn btn-ghost btn-sm edit-button p-2">
+        <i class="fas fa-edit"></i>
       </button>
-      <button class="btn btn-ghost btn-sm delete-button">
-        <i class="fas fa-trash"></i> Delete
+      <button class="btn btn-ghost btn-sm delete-button p-2">
+        <i class="fas fa-trash"></i>
       </button>
     `;
 
     controls.querySelector('.edit-button').addEventListener('click',
-      () => this.editMessage(messageId));
+      () => this.editMessage(index));
     controls.querySelector('.delete-button').addEventListener('click',
-      () => this.deleteMessage(messageId));
+      () => this.deleteMessage(index));
 
     return controls;
   }
@@ -233,12 +252,15 @@ export class UI {
     }
   }
 
-  editMessage(messageId) {
-    const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+  editMessage(index) {
+    const message = appState.chatHistory[index];
+    if (!message) return;
+
+    const messageDiv = document.querySelector(`[data-id="${index}"]`);
     if (!messageDiv) return;
 
-    const contentDiv = messageDiv.querySelector('.message-content');
-    const currentText = contentDiv.textContent;
+    const contentDiv = messageDiv.querySelector('.chat-bubble');
+    const currentText = message.content;
 
     // Create edit input
     const editInput = document.createElement('textarea');
@@ -268,8 +290,9 @@ export class UI {
     saveBtn.addEventListener('click', () => {
       const newText = editInput.value.trim();
       if (newText) {
-        appState.updateMessage(messageId, newText);
-        this.updateMessageDisplay(messageId, newText);
+        appState.chatHistory[index].content = newText;
+        appState.saveState();
+        this.renderMessages();
       }
     });
 
@@ -279,18 +302,19 @@ export class UI {
     });
   }
 
-  deleteMessage(messageId) {
+  deleteMessage(index) {
     if (confirm('Are you sure you want to delete this message?')) {
-      const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+      const messageDiv = document.querySelector(`[data-id="${index}"]`);
       if (messageDiv) {
         messageDiv.remove();
-        appState.deleteMessage(messageId);
+        appState.chatHistory = appState.chatHistory.filter((_, index) => index !== index);
+        appState.saveState();
       }
     }
   }
 
-  updateMessageDisplay(messageId, newText) {
-    const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+  updateMessageDisplay(index, newText) {
+    const messageDiv = document.querySelector(`[data-id="${index}"]`);
     if (!messageDiv) return;
 
     const contentDiv = messageDiv.querySelector('.message-content');
@@ -419,7 +443,7 @@ export class UI {
     const defaultAuthors = ['', 'system', 'narrator'];
     defaultAuthors.forEach(author => {
       const label = document.createElement('label');
-      label.className = 'join-item btn btn-sm flex-1';
+      label.className = `join-item btn btn-sm flex-1 ${author === appState.selectedAuthor ? 'btn-active' : ''}`;
 
       const btn = document.createElement('input');
       btn.type = 'radio';
@@ -427,16 +451,32 @@ export class UI {
       btn.value = author;
       btn.id = `author-${author || 'direct'}`;
       btn.className = 'hidden';
+      btn.checked = author === appState.selectedAuthor;
 
       label.htmlFor = btn.id;
       label.textContent = author || 'Direct';
 
-      label.addEventListener('click', () => {
-        btn.checked = true;
+      btn.addEventListener('change', () => {
+        appState.selectedAuthor = author;
+        appState.saveState();
+        this.updateAuthorSelectorVisuals();
       });
 
       label.appendChild(btn);
       this.elements.authorSelector.appendChild(label);
+    });
+  }
+
+  updateAuthorSelectorVisuals() {
+    const authorSelector = this.elements.authorSelector;
+    if (!authorSelector) return;
+
+    // Update all labels
+    authorSelector.querySelectorAll('label').forEach(label => {
+      const input = label.querySelector('input');
+      if (input) {
+        label.classList.toggle('btn-active', input.value === appState.selectedAuthor);
+      }
     });
   }
 
@@ -462,7 +502,7 @@ export class UI {
     characters.forEach(character => {
       if (!existingAuthors.has(character)) {
         const label = document.createElement('label');
-        label.className = 'join-item btn btn-sm flex-1';
+        label.className = `join-item btn btn-sm flex-1 ${character === appState.selectedAuthor ? 'btn-active' : ''}`;
 
         const btn = document.createElement('input');
         btn.type = 'radio';
@@ -470,12 +510,15 @@ export class UI {
         btn.value = character;
         btn.id = `author-${character}`;
         btn.className = 'hidden';
+        btn.checked = character === appState.selectedAuthor;
 
         label.htmlFor = btn.id;
         label.textContent = character;
 
-        label.addEventListener('click', () => {
-          btn.checked = true;
+        btn.addEventListener('change', () => {
+          appState.selectedAuthor = character;
+          appState.saveState();
+          this.updateAuthorSelectorVisuals();
         });
 
         label.appendChild(btn);

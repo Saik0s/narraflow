@@ -62,3 +62,18 @@
 .loading-spinner {
     @apply animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full;
 }
+
+/* Update the chat messages container styles */
+#chat-messages {
+    scroll-behavior: smooth;
+    /* Remove fixed height calculations and rely on flex layout */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0; /* This is important for flex containers */
+}
+
+/* Ensure messages don't get squished */
+#chat-messages > div {
+    flex-shrink: 0;
+}
