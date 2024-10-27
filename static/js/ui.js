@@ -3,15 +3,17 @@ import { sendMessage, generateImage } from './api.js';
 
 export class UI {
     constructor() {
-        // Initialize DOM elements
-        this.messageInput = document.getElementById('message-input');
-        this.sendButton = document.getElementById('send-button');
-        this.chatMessages = document.getElementById('chat-messages');
-        this.keywords = document.getElementById('keywords');
-        this.currentImage = document.getElementById('current-image');
-        this.darkModeToggle = document.getElementById('dark-mode-toggle');
-        this.clearHistoryBtn = document.getElementById('clear-history');
-
+        this.elements = {
+            messageInput: document.getElementById('message-input'),
+            sendButton: document.getElementById('send-button'),
+            chatMessages: document.getElementById('chat-messages'),
+            keywords: document.getElementById('keywords'),
+            currentImage: document.getElementById('current-image'),
+            darkModeToggle: document.getElementById('dark-mode-toggle'),
+            clearHistoryBtn: document.getElementById('clear-history'),
+            form: document.getElementById('chat-form')
+        };
+        
         this.setupEventListeners();
         this.setupImageControls();
         this.setupAuthorSelector();
@@ -19,39 +21,23 @@ export class UI {
     }
 
     setupEventListeners() {
-        // Use button click instead of form submit
-        const sendButton = document.getElementById('send-button');
-        sendButton.addEventListener('click', (e) => {
+        this.elements.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             this.handleSendMessage();
         });
-        
-        // Handle Enter key in input field
-        this.messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleSendMessage();
-            } else {
-                this.handleInputKeydown(e);
-            }
+
+        this.elements.messageInput.addEventListener('keydown', this.handleInputKeydown.bind(this));
+        this.elements.messageInput.addEventListener('input', () => this.updateSendButtonState());
+        this.elements.clearHistoryBtn.addEventListener('click', () => appState.clearState());
+        this.elements.darkModeToggle.addEventListener('change', () => {
+            appState.setTheme(this.elements.darkModeToggle.checked ? 'dark' : 'light');
         });
-        this.messageInput.addEventListener('input', () => this.updateSendButtonState());
-        this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
-        this.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
 
         // Listen for system dark mode changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            this.darkModeToggle.checked = e.matches;
-            this.setTheme(e.matches ? 'dark' : 'light');
+            this.elements.darkModeToggle.checked = e.matches;
+            appState.setTheme(e.matches ? 'dark' : 'light');
         });
-
-        // Initial dark mode check
-        const savedTheme = localStorage.getItem('theme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        this.darkModeToggle.checked = savedTheme === 'dark';
-        this.setTheme(savedTheme);
     }
 
     async handleSendMessage() {

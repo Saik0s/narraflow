@@ -5,12 +5,13 @@ export class AppState {
         this.commandHistory = [];
         this.historyIndex = -1;
         this.isProcessing = false;
-        this.lastImageGeneration = Date.now();
+        this.lastImageGeneration = 0;
         this.imageSettings = {
             enabled: true,
             mode: 'after_chat',
             interval_seconds: 30
         };
+        this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         this.loadFromStorage();
     }
 
@@ -36,13 +37,21 @@ export class AppState {
                 chatHistory: this.chatHistory,
                 commandHistory: this.commandHistory,
                 imageSettings: this.imageSettings,
-                selectedKeywords: Array.from(this.selectedKeywords)
+                selectedKeywords: Array.from(this.selectedKeywords),
+                theme: this.theme
             };
             localStorage.setItem('appState', JSON.stringify(state));
             console.log('State saved successfully');
         } catch (error) {
             console.error('Failed to save state:', error);
         }
+    }
+
+    setTheme(theme) {
+        this.theme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-theme', theme);
+        this.saveState();
     }
 
     loadState() {
