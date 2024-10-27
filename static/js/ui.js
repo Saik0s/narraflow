@@ -3,112 +3,82 @@ import { sendMessage, generateImage } from './api.js';
 
 export class UI {
     constructor() {
-        this.elements = {
-            messageInput: document.getElementById('message-input'),
-            sendButton: document.getElementById('send-button'),
-            chatMessages: document.getElementById('chat-messages'),
-            keywords: document.getElementById('keywords'),
-            currentImage: document.getElementById('current-image'),
-            darkModeToggle: document.getElementById('dark-mode-toggle'),
-            clearHistoryBtn: document.getElementById('clear-history'),
-            form: document.getElementById('chat-form')
-        };
-        
+        this.elements = this.initializeElements();
         this.setupEventListeners();
         this.setupImageControls();
         this.setupAuthorSelector();
-        this.imageGenTimer = null;
+    }
+
+    initializeElements() {
+        return {
+            messageInput: document.getElementById('message-input'),
+            sendButton: document.getElementById('send-button'),
+            chatMessages: document.getElementById('chat-messages'),
+            keywords: document.getElementById('keywords-container'),
+            imageContainer: document.getElementById('images-container'),
+            darkModeToggle: document.getElementById('dark-mode-toggle'),
+            clearHistoryBtn: document.getElementById('clear-history'),
+            form: document.getElementById('chat-form'),
+            authorSelector: document.getElementById('author-selector')
+        };
     }
 
     setupEventListeners() {
-        this.elements.form.addEventListener('submit', (e) => {
+        // Form submission
+        this.elements.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            this.handleSendMessage();
+            await this.handleSendMessage();
         });
 
+        // Input handling
         this.elements.messageInput.addEventListener('keydown', this.handleInputKeydown.bind(this));
         this.elements.messageInput.addEventListener('input', () => this.updateSendButtonState());
-        this.elements.clearHistoryBtn.addEventListener('click', () => appState.clearState());
+
+        // Theme handling
         this.elements.darkModeToggle.addEventListener('change', () => {
             appState.setTheme(this.elements.darkModeToggle.checked ? 'dark' : 'light');
         });
 
-        // Listen for system dark mode changes
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            this.elements.darkModeToggle.checked = e.matches;
-            appState.setTheme(e.matches ? 'dark' : 'light');
-        });
+        // Clear history
+        this.elements.clearHistoryBtn.addEventListener('click', () => this.handleClearHistory());
     }
 
     async handleSendMessage() {
-        // Prevent any form submission
-        event?.preventDefault();
-        event?.stopPropagation();
-
-        if (!this.isMessageValid() || appState.isProcessing) return;
-
-        const message = this.messageInput.value.trim();
+        const message = this.elements.messageInput.value.trim();
         const author = document.querySelector('input[name="author"]:checked')?.value || '';
-        
+
+        if (!message || appState.isProcessing) return;
+
         try {
             this.setLoadingState(true);
-            console.log('Preparing to send message with complete state');
+            const response = await sendMessage(message, author);
 
-            // Prepare complete state object
-            const completeState = {
-                message,
-                author,
-                state: {
-                    chatHistory: appState.chatHistory,
-                    selectedKeywords: Array.from(appState.selectedKeywords),
-                    commandHistory: appState.commandHistory,
-                    imageSettings: appState.imageSettings,
-                    lastImageGeneration: appState.lastImageGeneration
-                }
-            };
-
-            console.log('Sending complete state:', completeState);
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(completeState)
-            });
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const data = await response.json();
-            console.log('Received response:', data);
-
-            if (data.llm_response) {
-                // Handle multiple messages if present
-                this.appendMessage(data.llm_response);
-                
-                // Update keywords if present
-                if (data.llm_response.keywords) {
-                    this.updateKeywords(data.llm_response.keywords);
-                }
-
-                // Clear input and update UI state
-                this.messageInput.value = '';
+            if (response?.llm_response) {
+                this.appendMessage(response.llm_response);
+                this.elements.messageInput.value = '';
                 this.updateSendButtonState();
 
-                // Handle image generation if enabled
                 if (appState.imageSettings.enabled && 
                     appState.imageSettings.mode === 'after_chat') {
-                    await this.handleImageGeneration(completeState.state);
+                    await this.handleImageGeneration();
                 }
             }
-
         } catch (error) {
             console.error('Failed to send message:', error);
-            this.appendErrorMessage(error.message || 'Failed to send message');
+            this.showError(error.message || 'Failed to send message');
         } finally {
             this.setLoadingState(false);
+        }
+    }
+
+    async handleImageGeneration() {
+        try {
+            const response = await generateImage();
+            if (response?.image_url) {
+                this.updateImage(response.image_url);
+            }
+        } catch (error) {
+            this.showError('Failed to generate image');
         }
     }
 
