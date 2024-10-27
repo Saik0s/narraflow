@@ -171,13 +171,19 @@ body {
 }
 
 .message {
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
     background: var(--message-bg);
     color: var(--text-color);
     border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.message.narrator-message { border-left: 4px solid var(--plot-color); }
+.message.character-message { border-left: 4px solid var(--action-color); }
+.message.system-message { border-left: 4px solid var(--emotion-color); }
+.message.thought-message { border-left: 4px solid var(--object-color); }
 
 .message.error-message {
     background-color: var(--error-color);
@@ -308,12 +314,24 @@ thinking {
 
 .keyword {
     display: inline-block;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 1rem;
     margin: 0.25rem;
-    border-radius: 15px;
+    border-radius: 20px;
     cursor: pointer;
     transition: all 0.2s ease;
     border: 2px solid transparent;
+    opacity: 0.7;
+}
+
+.keyword:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.keyword.selected {
+    opacity: 1;
+    border: 2px solid var(--button-bg);
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
 }
 
 .keyword.selected {

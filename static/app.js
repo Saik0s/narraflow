@@ -28,8 +28,13 @@ class StoryApp {
     }
 
     setupEventListeners() {
-        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.sendButton.addEventListener('click', () => {
+            if (this.isMessageValid()) {
+                this.sendMessage();
+            }
+        });
         this.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+        this.messageInput.addEventListener('input', () => this.updateSendButtonState());
         
         document.querySelectorAll('.reaction').forEach(button => {
             button.addEventListener('click', () => this.handleReaction(button.dataset.reaction));
@@ -216,7 +221,9 @@ class StoryApp {
     handleInputKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            this.sendMessage();
+            if (this.isMessageValid()) {
+                this.sendMessage();
+            }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             this.navigateHistory('up');
@@ -262,7 +269,10 @@ class StoryApp {
 
     async sendMessage() {
         const message = this.messageInput.value.trim();
-        if (!message || this.isProcessing) return;
+        const hasPrefix = /^[@>/*]/.test(message);
+        const hasKeywords = this.selectedKeywords.size > 0;
+        
+        if ((!hasPrefix && !hasKeywords) || this.isProcessing) return;
 
         this.commandHistory.unshift(message);
         this.historyIndex = -1;
@@ -347,7 +357,8 @@ class StoryApp {
 
     appendMessage(response) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = 'message';
+        const messageType = this.getMessageType(response);
+        messageDiv.className = `message ${messageType}-message`;
         messageDiv.dataset.id = Date.now().toString();
         
         const controls = document.createElement('div');
@@ -511,6 +522,29 @@ class StoryApp {
         this.chatHistory = this.chatHistory.filter(m => m.id !== messageId);
         this.saveChatHistory();
         messageDiv.remove();
+    }
+
+    getMessageType(response) {
+        if (!response.dialog || response.dialog.length === 0) return 'system';
+        const firstDialog = response.dialog[0];
+        
+        switch(firstDialog.speaker.toLowerCase()) {
+            case 'narrator': return 'narrator';
+            case 'system': return 'system';
+            case 'thought': return 'thought';
+            default: return 'character';
+        }
+    }
+
+    isMessageValid() {
+        const message = this.messageInput.value.trim();
+        const hasPrefix = /^[@>/*]/.test(message);
+        const hasKeywords = this.selectedKeywords.size > 0;
+        return message && (hasPrefix || hasKeywords);
+    }
+
+    updateSendButtonState() {
+        this.sendButton.disabled = !this.isMessageValid() || this.isProcessing;
     }
 }
 
