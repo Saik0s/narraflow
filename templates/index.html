@@ -18,16 +18,17 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Add type="module" to enable ES6 modules -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Load app.js first -->
   <script type="module" src="{{ url_for('static', path='js/app.js') }}"></script>
+  <!-- Then load Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Add this line after the other CSS links -->
   <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
 </head>
 
 <body data-theme="dark" 
       class="min-h-screen bg-base-100" 
-      x-data="$store.app">
+      x-data="{}">
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
@@ -69,13 +70,13 @@
         <label class="swap swap-rotate">
           <input type="checkbox" 
                  class="theme-controller" 
-                 x-model="theme"
-                 :checked="theme === 'dark'"
+                 x-model="$store.app.theme"
+                 :checked="$store.app.theme === 'dark'"
                  @change="
-                   theme = $event.target.checked ? 'dark' : 'light';
-                   document.documentElement.setAttribute('data-theme', theme);
-                   document.body.setAttribute('data-theme', theme);
-                   localStorage.setItem('theme', theme);
+                   $store.app.theme = $event.target.checked ? 'dark' : 'light';
+                   document.documentElement.setAttribute('data-theme', $store.app.theme);
+                   document.body.setAttribute('data-theme', $store.app.theme);
+                   localStorage.setItem('theme', $store.app.theme);
                  " />
 
           <!-- sun icon -->
@@ -101,7 +102,7 @@
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Chat History</h2>
             <div id="chat-messages" class="flex-1 min-h-0 pb-4">
-              <template x-for="(message, index) in chatHistory" :key="index">
+              <template x-for="(message, index) in $store.app.chatHistory" :key="index">
                 <div :class="message.author.toLowerCase() === 'user' ? 'chat chat-end' : 'chat chat-start'" :data-id="index">
                   <div class="chat-header text-xs text-base-content/40" x-text="message.author"></div>
                   <div :class="`chat-bubble ${getAuthorColorClass(message.author)}`" x-text="message.content"></div>
@@ -114,7 +115,7 @@
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
             <div id="images-container" class="carousel carousel-vertical rounded-box flex-1 min-h-0">
-              <template x-for="imageUrl in imageHistory" :key="imageUrl">
+              <template x-for="imageUrl in $store.app.imageHistory" :key="imageUrl">
                 <div class="carousel-item h-auto w-full">
                   <img :src="imageUrl" class="rounded-box">
                 </div>
@@ -142,8 +143,8 @@
           <!-- Content will be loaded via JavaScript -->
         </div>
         <form id="chat-form" class="flex gap-2" @submit.prevent="handleSendMessage">
-          <input type="text" x-model="currentInput" placeholder="Type your message..." class="input input-bordered flex-1" @keydown.enter.prevent="handleSendMessage">
-          <button type="submit" class="btn btn-primary" :disabled="!isMessageValid() || isProcessing" x-text="isProcessing ? 'Processing...' : 'Send'"></button>
+          <input type="text" x-model="$store.app.currentInput" placeholder="Type your message..." class="input input-bordered flex-1" @keydown.enter.prevent="$store.app.handleSendMessage()">
+          <button type="submit" class="btn btn-primary" :disabled="!$store.app.isMessageValid() || $store.app.isProcessing" x-text="$store.app.isProcessing ? 'Processing...' : 'Send'"></button>
         </form>
       </div>
     </div>
