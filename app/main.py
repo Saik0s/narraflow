@@ -1,4 +1,5 @@
 from fastapi import Cookie, FastAPI, HTTPException, Request, Response, Form
+from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -19,6 +20,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# Initialize templates
+templates = Jinja2Templates(directory="templates")
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
