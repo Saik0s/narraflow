@@ -21,7 +21,7 @@ document.addEventListener('alpine:init', () => {
     imageSettings: {
       enabled: true,
       mode: 'after_chat',
-      interval_seconds: 30
+      interval_seconds: 10
     },
 
 
@@ -200,6 +200,7 @@ document.addEventListener('alpine:init', () => {
           this.keywords = response.llm_response.keywords;
           this.selectedKeywords = [];
           this.saveState();
+          this.renderKeywords();
 
           this.currentInput = '';
           this.updateSendButtonState();
@@ -306,7 +307,6 @@ document.addEventListener('alpine:init', () => {
 
     renderKeywords() {
       const container = document.getElementById('keywords');
-      if (!container) return;
 
       container.innerHTML = '';
       this.keywords.forEach(keyword => {
