@@ -4,24 +4,25 @@ import { sendMessage, generateImage } from './api.js';
 window.sendMessage = sendMessage;
 window.generateImage = generateImage;
 
-Alpine.store('app', {
-  ...window.alpineStore,
-  chatHistory: [],
-  imageHistory: [],
-  keywords: [],
-  selectedKeywords: [],
-  commandHistory: [],
-  historyIndex: -1,
-  isProcessing: false,
-  lastImageGeneration: 0,
-  currentlyEditingMessageIndex: null,
-  selectedAuthor: '',
-  currentInput: '',
-  imageSettings: {
-    enabled: true,
-    mode: 'after_chat',
-    interval_seconds: 30
-  },
+document.addEventListener('alpine:init', () => {
+  Alpine.store('app', {
+    ...window.alpineStore,
+    chatHistory: [],
+    imageHistory: [],
+    keywords: [],
+    selectedKeywords: [],
+    commandHistory: [],
+    historyIndex: -1,
+    isProcessing: false,
+    lastImageGeneration: 0,
+    currentlyEditingMessageIndex: null,
+    selectedAuthor: '',
+    currentInput: '',
+    imageSettings: {
+      enabled: true,
+      mode: 'after_chat',
+      interval_seconds: 30
+    },
 
     init() {
       this.loadFromStorage();
@@ -159,7 +160,7 @@ Alpine.store('app', {
         case 'thoughts':
         case 'system':
         case 'narrator':
-          return 'bg-base/5 text-base-content/50';
+          return 'bg-base-content/5 text-base-content/50';
         default:
           const hash = author.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
           const hue = hash % 360;
