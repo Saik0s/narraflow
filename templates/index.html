@@ -2,6 +2,16 @@
 <html lang="en">
 
 <head>
+  <script>
+    // Initialize store before Alpine loads
+    window.alpineStore = {
+      theme: localStorage.getItem('theme') || 'dark',
+      init() {
+        document.documentElement.setAttribute('data-theme', this.theme);
+        document.body.setAttribute('data-theme', this.theme);
+      }
+    };
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interactive Story</title>
@@ -17,7 +27,12 @@
 
 <body data-theme="dark" 
       class="min-h-screen bg-base-100" 
-      x-init="$nextTick(() => window.alpineStore.init())">
+      x-data="{ 
+        theme: window.alpineStore.theme,
+        init() {
+          window.alpineStore.init();
+        }
+      }">
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
@@ -59,9 +74,14 @@
         <label class="swap swap-rotate">
           <input type="checkbox" 
                  class="theme-controller" 
-                 x-model="$store.app.theme"
-                 :checked="$store.app.theme === 'dark'"
-                 @change="$store.app.applyTheme($event.target.checked ? 'dark' : 'light')" />
+                 x-model="theme"
+                 :checked="theme === 'dark'"
+                 @change="
+                   theme = $event.target.checked ? 'dark' : 'light';
+                   document.documentElement.setAttribute('data-theme', theme);
+                   document.body.setAttribute('data-theme', theme);
+                   localStorage.setItem('theme', theme);
+                 " />
 
           <!-- sun icon -->
           <svg class="swap-on fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
