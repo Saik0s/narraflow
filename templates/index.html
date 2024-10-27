@@ -36,20 +36,20 @@
         <div class="divider divider-horizontal"></div>
 
         <!-- Image Controls -->
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-4" x-data>
           <label class="flex items-center space-x-2">
-            <input type="checkbox" id="image-gen-enabled" class="checkbox checkbox-primary" checked />
+            <input type="checkbox" x-model="$store.app.imageSettings.enabled" @change="$store.app.toggleImageGeneration()" class="checkbox checkbox-primary" />
             <span class="label-text">Enable Image Generation</span>
           </label>
 
-          <select id="image-gen-mode" class="select select-bordered">
+          <select x-model="$store.app.imageSettings.mode" @change="$store.app.toggleImageGeneration()" class="select select-bordered">
             <option value="after_chat">After Each Chat</option>
             <option value="periodic">Periodic</option>
           </select>
 
-          <div id="interval-setting" class="form-control" style="display: none;">
+          <div x-show="$store.app.imageSettings.mode === 'periodic'" class="form-control">
             <label class="input-group">
-              <input type="number" id="interval-input" min="5" value="30" class="input input-bordered w-20" />
+              <input type="number" x-model.number="$store.app.imageSettings.interval_seconds" @input="$store.app.toggleImageGeneration()" min="5" class="input input-bordered w-20" />
               <span>seconds</span>
             </label>
           </div>

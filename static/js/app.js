@@ -24,6 +24,20 @@ document.addEventListener('alpine:init', () => {
       interval_seconds: 30
     },
 
+
+    init() {
+      this.loadFromStorage();
+      this.applyTheme(this.theme);
+
+      this.setupAuthorSelector();
+      this.renderKeywords();
+
+      // Start periodic generation if enabled
+      if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+        this.startPeriodicImageGeneration();
+      }
+    },
+
     clearState() {
       this.chatHistory = [];
       this.imageHistory = [];
@@ -115,71 +129,14 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    init() {
-      // Image Generation Settings
-      const imageGenEnabledCheckbox = document.getElementById('image-gen-enabled');
-      const imageGenModeSelect = document.getElementById('image-gen-mode');
-      const intervalInput = document.getElementById('interval-input');
-      const intervalSetting = document.getElementById('interval-setting');
 
-      // Load settings from state
-      imageGenEnabledCheckbox.checked = this.imageSettings.enabled;
-      imageGenModeSelect.value = this.imageSettings.mode;
-      intervalInput.value = this.imageSettings.interval_seconds;
-
-      // Show or hide interval setting based on mode
-      if (this.imageSettings.mode === 'periodic') {
-        intervalSetting.style.display = 'block';
-      } else {
-        intervalSetting.style.display = 'none';
-      }
-
-      // Event Listeners
-      imageGenEnabledCheckbox.addEventListener('change', (event) => {
-        this.imageSettings.enabled = event.target.checked;
-        this.saveState();
-
-        // Start or stop periodic generation if necessary
-        if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
-          this.startPeriodicImageGeneration();
-        } else {
-          this.stopPeriodicImageGeneration();
-        }
-      });
-
-      imageGenModeSelect.addEventListener('change', (event) => {
-        this.imageSettings.mode = event.target.value;
-        if (this.imageSettings.mode === 'periodic') {
-          intervalSetting.style.display = 'block';
-          this.startPeriodicImageGeneration();
-        } else {
-          intervalSetting.style.display = 'none';
-          this.stopPeriodicImageGeneration();
-        }
-        this.saveState();
-      });
-
-      intervalInput.addEventListener('input', (event) => {
-        this.imageSettings.interval_seconds = parseInt(event.target.value, 10);
-        this.saveState();
-
-        // Restart periodic generation with new interval
-        if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
-          this.stopPeriodicImageGeneration();
-          this.startPeriodicImageGeneration();
-        }
-      });
+    toggleImageGeneration() {
+      this.saveState();
 
       // Start periodic generation if enabled
       if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
         this.startPeriodicImageGeneration();
       }
-
-      this.loadFromStorage();
-      this.applyTheme(this.theme);
-
-      this.setupAuthorSelector();
-      this.renderKeywords();
     },
 
     loadFromStorage() {
