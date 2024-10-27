@@ -12,20 +12,10 @@ export async function sendMessage(message, author) {
     ui.keywords.innerHTML = '';
 
     try {
-        ui.setLoadingState(true);
-
-        // Check if using HTMX
-        if (document.querySelector('[hx-post="/api/chat"]')) {
-            // Let HTMX handle the request
-            return;
-        }
-
-        // Handle JSON request
         const requestBody = {
             message: message,
             author: author || "",
-            history: appState.chatHistory || [],
-            selected_keywords: selectedKeywordsArray || []
+            state: appState.getState() // Send the full state
         };
 
         const response = await fetch('/api/chat', {
@@ -40,24 +30,11 @@ export async function sendMessage(message, author) {
             throw new Error(await response.text());
         }
 
-        const data = await response.json();
-
-        if (data.llm_response) {
-            ui.appendMessage(data.llm_response);
-            if (data.llm_response.keywords) {
-                ui.updateKeywords(data.llm_response.keywords);
-            }
-
-            if (appState.imageSettings.enabled && appState.imageSettings.mode === 'after_chat') {
-                await generateImage();
-            }
-        }
+        return await response.json();
 
     } catch (error) {
         console.error('Failed to send message:', error);
-        ui.appendErrorMessage(error.message || 'Failed to send message. Please try again.');
-    } finally {
-        ui.setLoadingState(false);
+        throw error;
     }
 }
 
