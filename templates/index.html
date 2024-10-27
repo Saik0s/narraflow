@@ -27,12 +27,7 @@
 
 <body data-theme="dark" 
       class="min-h-screen bg-base-100" 
-      x-data="{ 
-        theme: window.alpineStore.theme,
-        init() {
-          window.alpineStore.init();
-        }
-      }">
+      x-data="$store.app">
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
@@ -106,7 +101,12 @@
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Chat History</h2>
             <div id="chat-messages" class="flex-1 min-h-0 pb-4">
-              <!-- Chat messages will be inserted here -->
+              <template x-for="(message, index) in chatHistory" :key="index">
+                <div :class="message.author.toLowerCase() === 'user' ? 'chat chat-end' : 'chat chat-start'" :data-id="index">
+                  <div class="chat-header text-xs text-base-content/40" x-text="message.author"></div>
+                  <div :class="`chat-bubble ${getAuthorColorClass(message.author)}`" x-text="message.content"></div>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -114,7 +114,11 @@
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
             <div id="images-container" class="carousel carousel-vertical rounded-box flex-1 min-h-0">
-              <!-- Images will be inserted here -->
+              <template x-for="imageUrl in imageHistory" :key="imageUrl">
+                <div class="carousel-item h-auto w-full">
+                  <img :src="imageUrl" class="rounded-box">
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -124,228 +128,22 @@
     <!-- Bottom Panel -->
     <div class="bg-base-200 rounded-box shadow-lg p-4">
       <div id="keywords" class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2">
+        <template x-for="keyword in keywords" :key="keyword.text">
+          <div class="form-control">
+            <label class="label cursor-pointer gap-2 bg-base-200 rounded-full px-4 py-2 hover:bg-base-300 transition-colors">
+              <span :class="`label-text text-${keyword.category}`" x-text="keyword.text"></span>
+              <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" :checked="selectedKeywords.includes(keyword.text)" @change="toggleKeyword(keyword.text)">
+            </label>
+          </div>
+        </template>
       </div>
       <div class="flex flex-col gap-2">
         <div id="author-selector" class="join w-full mb-2">
           <!-- Content will be loaded via JavaScript -->
         </div>
-        <form id="chat-form" 
-              class="flex gap-2" 
-              x-data="{ 
-                message: '',
-                isProcessing: false,
-                selectedKeywords: [],
-                chatHistory: [],
-                imageHistory: [],
-                keywords: [],
-                
-                init() {
-                  this.loadState();
-                  this.setupImageControls();
-                  this.setupAuthorSelector();
-                  this.renderMessages();
-                  this.renderKeywords();
-                  this.renderImages();
-                },
-
-                loadState() {
-                  const state = localStorage.getItem('appState');
-                  if (state) {
-                    const parsed = JSON.parse(state);
-                    this.chatHistory = parsed.chatHistory || [];
-                    this.imageHistory = parsed.imageHistory || [];
-                    this.keywords = parsed.keywords || [];
-                    this.selectedKeywords = parsed.selectedKeywords || [];
-                  }
-                },
-
-                saveState() {
-                  localStorage.setItem('appState', JSON.stringify({
-                    chatHistory: this.chatHistory,
-                    imageHistory: this.imageHistory,
-                    keywords: this.keywords,
-                    selectedKeywords: this.selectedKeywords
-                  }));
-                },
-
-                isValid() {
-                  return this.message.trim() || this.selectedKeywords.length > 0;
-                },
-
-                async handleSendMessage() {
-                  if (!this.isValid() || this.isProcessing) return;
-                  
-                  try {
-                    this.isProcessing = true;
-                    const response = await sendMessage(
-                      this.message,
-                      $store.app?.selectedAuthor || '',
-                      this.chatHistory,
-                      this.selectedKeywords
-                    );
-
-                    if (response?.llm_response) {
-                      this.chatHistory.push(...response.llm_response.messages);
-                      this.keywords = response.llm_response.keywords;
-                      this.selectedKeywords = [];
-                      this.message = '';
-                      this.saveState();
-                      this.renderMessages();
-                      this.renderKeywords();
-                      
-                      if ($store.app?.imageSettings?.enabled &&
-                          $store.app?.imageSettings?.mode === 'after_chat') {
-                        await this.handleImageGeneration();
-                      }
-                    }
-                  } catch (error) {
-                    console.error('Failed to send message:', error);
-                    this.showError('Failed to send message');
-                  } finally {
-                    this.isProcessing = false;
-                  }
-                },
-
-                async handleImageGeneration() {
-                  if (!$store.app?.imageSettings?.enabled ||
-                      Date.now() - $store.app?.lastImageGeneration < 5000) {
-                    return;
-                  }
-
-                  try {
-                    const response = await generateImage(this.chatHistory);
-                    if (response?.image_url) {
-                      this.imageHistory.push(response.image_url);
-                      $store.app.lastImageGeneration = Date.now();
-                      this.saveState();
-                      this.renderImages();
-                    }
-                  } catch (error) {
-                    this.showError('Failed to generate image');
-                  }
-                },
-
-                renderMessages() {
-                  const container = document.getElementById('chat-messages');
-                  if (!container) return;
-
-                  container.innerHTML = '';
-                  this.chatHistory.forEach((message, index) => {
-                    const messageEl = this.createMessageElement(message, index);
-                    container.appendChild(messageEl);
-                  });
-
-                  container.scrollTop = container.scrollHeight;
-                },
-
-                createMessageElement(message, index) {
-                  const wrapper = document.createElement('div');
-                  wrapper.className = message.author.toLowerCase() === 'user' ? 'chat chat-end' : 'chat chat-start';
-                  wrapper.dataset.id = index;
-
-                  const header = document.createElement('div');
-                  header.className = 'chat-header text-xs text-base-content/40';
-                  header.textContent = message.author;
-
-                  const bubble = document.createElement('div');
-                  bubble.className = `chat-bubble ${this.getAuthorColorClass(message.author)}`;
-                  bubble.textContent = message.content;
-
-                  wrapper.appendChild(header);
-                  wrapper.appendChild(bubble);
-                  return wrapper;
-                },
-
-                getAuthorColorClass(author) {
-                  switch (author.toLowerCase()) {
-                    case 'thoughts':
-                    case 'system':
-                    case 'narrator':
-                      return 'bg-base/5 text-base-content/50';
-                    default:
-                      const hash = author.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
-                      const hue = hash % 360;
-                      return `bg-[hsl(${hue},10%,20%)] text-[hsl(${hue},60%,80%)]`;
-                  }
-                },
-
-                renderKeywords() {
-                  const container = document.getElementById('keywords');
-                  if (!container) return;
-
-                  container.innerHTML = '';
-                  this.keywords.forEach(keyword => {
-                    const keywordEl = this.createKeywordElement(keyword);
-                    container.appendChild(keywordEl);
-                  });
-                },
-
-                createKeywordElement(keyword) {
-                  const wrapper = document.createElement('div');
-                  wrapper.className = 'form-control';
-
-                  const label = document.createElement('label');
-                  label.className = 'label cursor-pointer gap-2 bg-base-200 rounded-full px-4 py-2 hover:bg-base-300 transition-colors';
-
-                  const span = document.createElement('span');
-                  span.className = `label-text text-${keyword.category}`;
-                  span.textContent = keyword.text;
-
-                  const checkbox = document.createElement('input');
-                  checkbox.type = 'checkbox';
-                  checkbox.className = 'checkbox checkbox-sm checkbox-primary';
-                  checkbox.checked = this.selectedKeywords.includes(keyword.text);
-                  checkbox.addEventListener('change', () => this.toggleKeyword(keyword.text));
-
-                  label.appendChild(span);
-                  label.appendChild(checkbox);
-                  wrapper.appendChild(label);
-                  return wrapper;
-                },
-
-                toggleKeyword(keyword) {
-                  const index = this.selectedKeywords.indexOf(keyword);
-                  if (index === -1) {
-                    this.selectedKeywords.push(keyword);
-                  } else {
-                    this.selectedKeywords.splice(index, 1);
-                  }
-                  this.saveState();
-                },
-
-                showError(message) {
-                  const notification = document.createElement('div');
-                  notification.className = 'toast toast-top toast-end';
-                  notification.innerHTML = `
-                    <div class="alert alert-error">
-                      <span>${message}</span>
-                    </div>
-                  `;
-                  document.body.appendChild(notification);
-                  // Ensure notification is removed even if user navigates away
-                  const timeoutId = setTimeout(() => {
-                    if (document.body.contains(notification)) {
-                      notification.remove();
-                    }
-                  }, 3000);
-                  // Clean up timeout if notification is removed early
-                  notification.addEventListener('click', () => {
-                    clearTimeout(timeoutId);
-                    notification.remove();
-                  });
-                }
-              }"
-              @submit.prevent="handleSendMessage()">
-          <input type="text" 
-                 x-model="message"
-                 placeholder="Type your message..." 
-                 class="input input-bordered flex-1"
-                 @keydown.enter.prevent="handleSendMessage">
-          <button type="submit" 
-                  class="btn btn-primary"
-                  :disabled="!isValid() || isProcessing"
-                  x-text="isProcessing ? 'Processing...' : 'Send'">
-          </button>
+        <form id="chat-form" class="flex gap-2" @submit.prevent="handleSendMessage">
+          <input type="text" x-model="currentInput" placeholder="Type your message..." class="input input-bordered flex-1" @keydown.enter.prevent="handleSendMessage">
+          <button type="submit" class="btn btn-primary" :disabled="!isMessageValid() || isProcessing" x-text="isProcessing ? 'Processing...' : 'Send'"></button>
         </form>
       </div>
     </div>
