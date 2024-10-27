@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 
 
 class Keyword(BaseModel):
@@ -50,9 +50,9 @@ class ImageData(BaseModel):
 
 class ChatMessage(BaseModel):
     message: str
-    author: Optional[str] = None  # Replace prefix with optional author
-    history: List[dict] = []
-    selected_keywords: List[str] = []
+    author: Optional[str] = ""
+    history: Optional[List[Dict[str, Any]]] = []
+    selected_keywords: Optional[List[str]] = []
 
 
 class ImagePrompt(BaseModel):

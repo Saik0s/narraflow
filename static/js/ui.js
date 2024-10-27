@@ -191,6 +191,16 @@ export class UI {
 
         const bottomPanel = document.querySelector('.flex.flex-col.gap-2');
         bottomPanel.insertBefore(authorSelector, bottomPanel.firstChild);
+
+        // Update hidden author input when selection changes
+        const authorInputs = authorSelector.querySelectorAll('input[type="radio"]');
+        const hiddenAuthorInput = document.getElementById('selected-author');
+
+        authorInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                hiddenAuthorInput.value = e.target.value;
+            });
+        });
     }
 
     updateAuthorSelector() {

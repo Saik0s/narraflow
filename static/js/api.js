@@ -13,36 +13,39 @@ export async function sendMessage(message, author) {
 
     try {
         ui.setLoadingState(true);
+
+        // Check if using HTMX
+        if (document.querySelector('[hx-post="/api/chat"]')) {
+            // Let HTMX handle the request
+            return;
+        }
+
+        // Handle JSON request
+        const requestBody = {
+            message: message,
+            author: author || "",
+            history: appState.chatHistory || [],
+            selected_keywords: selectedKeywordsArray || []
+        };
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                message: message,
-                author: author,
-                history: appState.chatHistory,
-                selected_keywords: selectedKeywordsArray
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(await response.text());
         }
 
         const data = await response.json();
 
-        if (data.error) {
-            ui.appendErrorMessage(data.error);
-            return;
-        }
-
-        const { llm_response } = data;
-
-        if (llm_response) {
-            ui.appendMessage(llm_response);
-            if (llm_response.keywords) {
-                ui.updateKeywords(llm_response.keywords);
+        if (data.llm_response) {
+            ui.appendMessage(data.llm_response);
+            if (data.llm_response.keywords) {
+                ui.updateKeywords(data.llm_response.keywords);
             }
 
             if (appState.imageSettings.enabled && appState.imageSettings.mode === 'after_chat') {
@@ -52,7 +55,7 @@ export async function sendMessage(message, author) {
 
     } catch (error) {
         console.error('Failed to send message:', error);
-        ui.appendErrorMessage('Failed to send message. Please try again.');
+        ui.appendErrorMessage(error.message || 'Failed to send message. Please try again.');
     } finally {
         ui.setLoadingState(false);
     }

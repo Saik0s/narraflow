@@ -1,0 +1,21 @@
+<div class="message" data-id="{{ message.id }}">
+    <div class="message-content">
+        {% for msg in message.messages %}
+        <p class="message-text {{ msg.author.lower() }}">
+            {% if msg.author == 'thoughts' %}
+                {{ msg.content }}
+            {% else %}
+                {{ msg.author }}: {{ msg.content }}
+            {% endif %}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="edit-controls">
+        <button onclick="app.editMessage('{{ message.id }}')">
+            <i class="fas fa-edit"></i> Edit
+        </button>
+        <button onclick="app.deleteMessage('{{ message.id }}')">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+    </div>
+</div>

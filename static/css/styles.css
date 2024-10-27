@@ -1,0 +1,39 @@
+.message {
+    @apply bg-base-200 rounded-lg p-4 shadow-sm;
+}
+
+.message-content {
+    @apply space-y-2;
+}
+
+.message-text {
+    @apply text-base-content;
+}
+
+.message-text.thoughts {
+    @apply italic text-base-content/70;
+}
+
+.message-text.narrator {
+    @apply font-medium;
+}
+
+.message-text.system {
+    @apply text-info font-mono text-sm;
+}
+
+.edit-controls {
+    @apply mt-2 flex justify-end gap-2;
+}
+
+.user-message {
+    @apply bg-primary/10;
+}
+
+.assistant-message {
+    @apply bg-secondary/10;
+}
+
+.error-message {
+    @apply bg-error/10;
+}

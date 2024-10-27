@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Story</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ url_for('static', path='js/state-management.js') }}" defer></script>
+    <!-- Add this line after the other CSS links -->
+    <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
+</head>
+<body data-theme="{{ initial_state.theme if initial_state else 'light' }}" class="min-h-screen bg-base-100" hx-boost="true">
+    <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
+        <!-- Password Panel -->
+        <div class="navbar bg-base-200 rounded-box shadow-lg">
+            <div class="flex-1 gap-2">
+                <input type="password"
+                       id="state-password"
+                       name="password"
+                       placeholder="Enter password to save/restore state"
+                       class="input input-bordered w-full max-w-xs"
+                       hx-post="/api/validate-password"
+                       hx-trigger="change"
+                       hx-swap="none">
+                <button class="btn btn-primary btn-sm"
+                        hx-post="/api/save-state"
+                        hx-include="#state-password"
+                        hx-swap="none">
+                    Save State
+                </button>
+                <button class="btn btn-secondary btn-sm"
+                        hx-post="/api/load-state"
+                        hx-include="#state-password"
+                        hx-swap="none"
+                        hx-trigger="click"
+                        hx-target="body">
+                    Load State
+                </button>
+            </div>
+            <div class="flex-1">
+                <button hx-delete="/api/history"
+                        hx-confirm="Are you sure you want to clear the chat history?"
+                        hx-target="#chat-messages"
+                        hx-swap="innerHTML"
+                        class="btn btn-ghost">Clear History</button>
+            </div>
+            <div class="flex-none">
+                <label class="swap swap-rotate">
+                    <input type="checkbox" id="dark-mode-toggle"
+                           hx-post="/api/theme"
+                           hx-trigger="change"
+                           hx-vals='js:{theme: event.target.checked ? "dark" : "light"}'/>
+                    <!-- Icons here -->
+                </label>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="card bg-base-200 shadow-xl flex-1 min-h-0 overflow-hidden">
+            <div class="card-body h-full p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                    <!-- Chat Column -->
+                    <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+                        <h2 class="text-xl font-bold mb-4">Chat History</h2>
+                        <div id="chat-messages"
+                             class="flex-1 overflow-y-auto"
+                             hx-get="/api/messages"
+                             hx-trigger="load"></div>
+                    </div>
+
+                    <!-- Images Column -->
+                    <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+                        <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
+                        <div id="images-container"
+                             class="flex-1 overflow-y-auto space-y-4"
+                             hx-get="/api/images"
+                             hx-trigger="load">
+                            <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
+                        </div>
+                        <!-- Image Controls -->
+                        <div class="image-controls mt-4 card bg-base-200 p-4">
+                            <div class="form-control">
+                                <label class="label cursor-pointer justify-start gap-4">
+                                    <input type="checkbox"
+                                           hx-post="/api/settings/image"
+                                           hx-trigger="change"
+                                           hx-vals='js:{enabled: event.target.checked}'
+                                           checked
+                                           class="checkbox checkbox-primary" />
+                                    <span class="label-text">Enable Image Generation</span>
+                                </label>
+                            </div>
+                            <select hx-post="/api/settings/image-mode"
+                                    hx-trigger="change"
+                                    class="select select-bordered w-full mt-2">
+                                <option value="after_chat">After Each Chat</option>
+                                <option value="periodic">Periodic</option>
+                                <option value="manual">Manual Only</option>
+                            </select>
+                            <div id="interval-setting" class="form-control mt-2">
+                                <label class="input-group">
+                                    <input type="number"
+                                           hx-post="/api/settings/interval"
+                                           hx-trigger="change"
+                                           min="5"
+                                           value="30"
+                                           class="input input-bordered w-20" />
+                                    <span>seconds</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div class="bg-base-200 rounded-box shadow-lg p-4">
+            <div id="keywords"
+                 class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2"
+                 hx-get="/api/keywords"
+                 hx-trigger="load"></div>
+            <div class="flex flex-col gap-2">
+                <!-- Replace the existing author-selector div with this -->
+                <div id="author-selector"
+                     hx-get="/api/authors"
+                     hx-trigger="load"
+                     hx-target="this"
+                     hx-swap="innerHTML"
+                     class="join w-full mb-2">
+                    <!-- Content will be loaded via HTMX -->
+                </div>
+                <!-- Replace the existing form with this -->
+                <form id="chat-form"
+                      hx-post="/api/chat"
+                      hx-target="#chat-messages"
+                      hx-swap="beforeend"
+                      hx-trigger="submit"
+                      class="flex gap-2">
+                    <input type="text"
+                           name="message"
+                           id="message-input"
+                           placeholder="Type your message..."
+                           class="input input-bordered flex-1">
+                    <input type="hidden" name="author" id="selected-author">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            hx-disabled-elt="this">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

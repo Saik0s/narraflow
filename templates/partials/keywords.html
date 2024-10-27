@@ -1,0 +1,11 @@
+<div class="flex flex-wrap gap-2">
+    {% for keyword in keywords %}
+    <span class="badge badge-{{ keyword.category }} gap-2"
+          hx-post="/api/keywords/select"
+          hx-trigger="click"
+          hx-swap="none">
+        {{ keyword.text }}
+        <span class="opacity-50">({{ "%.1f"|format(keyword.weight) }})</span>
+    </span>
+    {% endfor %}
+</div>

@@ -1,7 +1,7 @@
 import logging
 from openai import AsyncOpenAI
 import instructor
-from app.models import LLMResponse, Keyword, Message
+from app.models import LLMResponse, Keyword, Message, ChatMessage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -11,12 +11,37 @@ openai_client = AsyncOpenAI()
 client = instructor.from_openai(openai_client)
 
 
-async def process_chat(message: str, history: list[str]) -> LLMResponse:
+async def process_chat(chat_data: ChatMessage) -> LLMResponse:
+    """
+    Process a chat message and generate a response
+
+    Args:
+        chat_data: ChatMessage object containing message, author, history, and selected keywords
+
+    Returns:
+        LLMResponse object containing messages and keywords
+    """
     # Format history for better context
     formatted_history = []
-    for msg in history[-10:]:  # Keep last 10 messages for context
-        formatted_history.append(f"User: {msg}")
-    formatted_history.append(f"User: {message}")
+    if chat_data.history:
+        for msg in chat_data.history[-10:]:  # Keep last 10 messages for context
+            if isinstance(msg, dict) and "messages" in msg:
+                for submsg in msg["messages"]:
+                    formatted_history.append(
+                        f"{submsg.get('author', 'User')}: {submsg.get('content', '')}"
+                    )
+
+    # Add current message
+    current_msg = (
+        f"{chat_data.author + ': ' if chat_data.author else ''}{chat_data.message}"
+    )
+    formatted_history.append(current_msg)
+
+    # Add selected keywords if any
+    if chat_data.selected_keywords:
+        formatted_history.append(
+            f"Selected keywords: {', '.join(chat_data.selected_keywords)}"
+        )
 
     context = "\n".join(formatted_history)
 
@@ -27,7 +52,6 @@ async def process_chat(message: str, history: list[str]) -> LLMResponse:
     - keywords: An array of story-relevant keywords where each entry has:
         - category: One of ["action", "emotion", "object", "plot"]
         - text: The keyword text
-        - weight: A float between 0 and 1 indicating importance
 
     For messages, use:
     - "thoughts" for meta-commentary about the story
@@ -72,5 +96,5 @@ async def process_chat(message: str, history: list[str]) -> LLMResponse:
                     content="There was an error generating the story response. Please try again.",
                 )
             ],
-            keywords=[Keyword(category="plot", text="story-interrupted", weight=1.0)],
+            keywords=[Keyword(category="plot", text="story-interrupted")],
         )
