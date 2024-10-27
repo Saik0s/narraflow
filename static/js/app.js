@@ -1,11 +1,5 @@
-import { appState } from './state.js';
-import { UI } from './ui.js';
+import { sendMessage, generateImage } from './api.js';
 
-// Create UI instance
-export const ui = new UI();
-
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    appState.loadFromStorage();
-    ui.init();
-});
+// Export API functions for use in Alpine components
+window.sendMessage = sendMessage;
+window.generateImage = generateImage;

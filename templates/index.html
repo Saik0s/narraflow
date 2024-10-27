@@ -9,12 +9,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <!-- Add type="module" to enable ES6 modules -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script type="module" src="{{ url_for('static', path='js/app.js') }}"></script>
   <!-- Add this line after the other CSS links -->
   <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
 </head>
 
-<body data-theme="dark" class="min-h-screen bg-base-100">
+<body data-theme="dark" class="min-h-screen bg-base-100" 
+      x-data="{ 
+        init() {
+          this.$store.app.init();
+        }
+      }">
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
@@ -102,9 +108,54 @@
         <div id="author-selector" class="join w-full mb-2">
           <!-- Content will be loaded via JavaScript -->
         </div>
-        <form id="chat-form" class="flex gap-2" novalidate data-form-type="chat">
-          <input type="text" name="message" id="message-input" placeholder="Type your message..." class="input input-bordered flex-1">
-          <button type="button" id="send-button" class="btn btn-primary">Send</button>
+        <form id="chat-form" class="flex gap-2" 
+              @submit.prevent="handleSendMessage()"
+              x-data="{ 
+                isValid() {
+                  return $store.app.currentInput || $store.app.selectedKeywords.length > 0;
+                },
+                async handleSendMessage() {
+                  if (!isValid() || $store.app.isProcessing) return;
+                  
+                  try {
+                    $store.app.isProcessing = true;
+                    const response = await sendMessage(
+                      $store.app.currentInput,
+                      $store.app.selectedAuthor,
+                      $store.app.chatHistory,
+                      $store.app.selectedKeywords
+                    );
+
+                    if (response?.llm_response) {
+                      response.llm_response.messages.forEach(message => {
+                        $store.app.chatHistory.push(message);
+                      });
+                      $store.app.keywords = response.llm_response.keywords;
+                      $store.app.selectedKeywords = [];
+                      $store.app.currentInput = '';
+                      $store.app.saveState();
+                      
+                      if ($store.app.imageSettings.enabled &&
+                          $store.app.imageSettings.mode === 'after_chat') {
+                        await handleImageGeneration();
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Failed to send message:', error);
+                  } finally {
+                    $store.app.isProcessing = false;
+                  }
+                }
+              }">
+          <input type="text" 
+                 x-model="$store.app.currentInput"
+                 placeholder="Type your message..." 
+                 class="input input-bordered flex-1">
+          <button type="submit" 
+                  class="btn btn-primary"
+                  :disabled="!isValid() || $store.app.isProcessing"
+                  x-text="$store.app.isProcessing ? 'Processing...' : 'Send'">
+          </button>
         </form>
       </div>
     </div>
