@@ -270,9 +270,6 @@ document.addEventListener('alpine:init', () => {
             this.chatHistory.push(message);
           });
 
-          // Add this line to scroll after messages are added
-          this.$nextTick(() => this.scrollChatToBottom());
-
           this.keywords = response.llm_response.keywords;
           this.selectedKeywords = [];
           this.saveState();
@@ -287,6 +284,7 @@ document.addEventListener('alpine:init', () => {
           }
 
           this.updateAuthorSelector();
+          this.scrollChatToBottom();
         }
       } catch (error) {
         console.error('Failed to send message:', error);
