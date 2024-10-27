@@ -183,3 +183,15 @@ img:not(.lazy) {
 .carousel-item img.opacity-100 {
   opacity: 1;
 }
+/* Add these styles */
+.group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+}
+
+.group .opacity-0 {
+    opacity: 0;
+}
+
+.transition-opacity {
+    transition: opacity 0.3s ease-in-out;
+}

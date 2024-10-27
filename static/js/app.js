@@ -121,6 +121,24 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
+    deleteMessage(index) {
+      // Show confirmation dialog using DaisyUI
+      if (window.confirm('Are you sure you want to delete this message?')) {
+        this.chatHistory.splice(index, 1);
+        this.saveState();
+      }
+    },
+
+    deleteImage(index) {
+      // Show confirmation dialog using DaisyUI
+      if (window.confirm('Are you sure you want to delete this image?')) {
+        this.imageHistory.splice(index, 1);
+        this.saveState();
+        // Dispatch custom event when images are updated
+        window.dispatchEvent(new CustomEvent('images-changed'));
+      }
+    },
+
     updateAuthorSelectorVisuals() {
       const authorSelector = document.getElementById('author-selector');
       if (!authorSelector) return;

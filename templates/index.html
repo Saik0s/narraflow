@@ -106,7 +106,14 @@
                  x-effect="$nextTick(() => $store.app.scrollChatToBottom())">
               <template x-for="(message, index) in $store.app.chatHistory" :key="index">
                 <div :class="['system', 'narrator', 'thoughts'].includes(message.author.toLowerCase()) ? 'chat chat-end' : 'chat chat-start'" :data-id="index">
-                  <div class="chat-header text-xs text-base-content/40" x-text="message.author"></div>
+                  <div class="chat-header flex items-center gap-2">
+                    <span class="text-xs text-base-content/40" x-text="message.author"></span>
+                    <button class="btn btn-ghost btn-xs" @click="$store.app.deleteMessage(index)">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                   <div :class="`chat-bubble ${$store.app.getAuthorColorClass(message.author)}`" x-text="message.content"></div>
                 </div>
               </template>
@@ -128,12 +135,22 @@
                    const container = $el;
                    container.scrollTop = container.scrollHeight;
                  })">
-              <template x-for="(imageUrl, index) in $store.app.imageHistory" :key="index">
-                <div class="carousel-item h-auto w-full">
+              <template x-for="(image, index) in $store.app.imageHistory" :key="index">
+                <div class="carousel-item h-auto w-full relative group">
                   <img
-                    x-intersect:enter="loadImage($el, imageUrl)"
+                    x-intersect:enter="loadImage($el, image.url)"
                     class="rounded-box w-full h-auto opacity-0 transition-opacity duration-300"
                     src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                  <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="btn btn-sm btn-circle btn-error" @click="$store.app.deleteImage(index)">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="absolute bottom-2 left-2 right-2 bg-base-300/80 p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p class="text-sm" x-text="image.prompt"></p>
+                  </div>
                 </div>
               </template>
             </div>
