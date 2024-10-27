@@ -416,7 +416,7 @@ class StoryApp {
             span.dataset.category = keyword.category;
             span.textContent = keyword.text;
             span.style.opacity = keyword.weight;
-            span.addEventListener('click', () => this.handleKeywordClick(keyword));
+            span.addEventListener('click', (event) => this.handleKeywordClick(keyword, event));
             this.keywords.appendChild(span);
         });
     }
@@ -449,7 +449,7 @@ class StoryApp {
         this.saveChatHistory();
     }
 
-    handleKeywordClick(keyword) {
+    handleKeywordClick(keyword, event) {
         const keywordElement = event.target;
         const isSelected = this.selectedKeywords.has(keyword.text);
         
