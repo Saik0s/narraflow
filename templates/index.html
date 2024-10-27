@@ -44,6 +44,21 @@
 
         <!-- Image Controls -->
         <div class="flex items-center space-x-4" x-data>
+          <!-- Image Mode Toggle -->
+          <div class="join">
+            <button 
+              class="join-item btn btn-sm" 
+              :class="$store.app.imageGenerationMode === 'regular' ? 'btn-primary' : 'btn-ghost'"
+              @click="$store.app.toggleImageMode('regular')">
+              Regular
+            </button>
+            <button 
+              class="join-item btn btn-sm" 
+              :class="$store.app.imageGenerationMode === 'comfy' ? 'btn-primary' : 'btn-ghost'"
+              @click="$store.app.toggleImageMode('comfy')">
+              ComfyUI
+            </button>
+          </div>
           <label class="flex items-center space-x-2">
             <input type="checkbox" x-model="$store.app.imageSettings.enabled" @change="$store.app.toggleImageGeneration()" class="checkbox checkbox-primary" />
             <span class="label-text">Enable Image Generation</span>

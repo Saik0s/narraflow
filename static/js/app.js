@@ -76,6 +76,8 @@ document.addEventListener('alpine:init', () => {
     },
     selectedImage: null,
 
+    imageGenerationMode: localStorage.getItem('imageGenerationMode') || 'regular',
+
     init() {
       this.loadFromStorage();
       window.editor.setValue(this.config.comfyWorkflow);
@@ -206,6 +208,11 @@ document.addEventListener('alpine:init', () => {
       if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
         this.startPeriodicImageGeneration();
       }
+    },
+
+    toggleImageMode(mode) {
+      this.imageGenerationMode = mode;
+      localStorage.setItem('imageGenerationMode', mode);
     },
 
     loadFromStorage() {

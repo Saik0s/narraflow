@@ -31,17 +31,29 @@ export async function sendMessage(content, author, history, selectedKeywords) {
 export async function generateImage(history, imageHistory) {
   try {
     const imagePrompt = localStorage.getItem('imagePrompt') || '';
+    const imageMode = localStorage.getItem('imageGenerationMode') || 'regular';
     console.log('Requesting image generation');
-    const response = await fetch('/api/image/generate', {
+    
+    const endpoint = imageMode === 'comfy' ? '/api/image/comfyui' : '/api/image/generate';
+    const requestBody = {
+      history: history,
+      imageHistory: imageHistory,
+      systemPrompt: imagePrompt
+    };
+
+    // Add ComfyUI specific fields if needed
+    if (imageMode === 'comfy') {
+      requestBody.workflow = JSON.parse(localStorage.getItem('comfyWorkflow') || '{}');
+      requestBody.positivePromptPlaceholder = localStorage.getItem('positivePromptPlaceholder') || '{positive_prompt}';
+      requestBody.negativePromptPlaceholder = localStorage.getItem('negativePromptPlaceholder') || '{negative_prompt}';
+    }
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        history: history,
-        imageHistory: imageHistory,
-        systemPrompt: imagePrompt
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
