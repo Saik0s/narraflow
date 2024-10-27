@@ -72,13 +72,20 @@ class StoryApp {
         try {
             history = saved ? JSON.parse(saved) : [];
             
-            // Restore chat messages from history
-            history.forEach(msg => {
-                if (!msg || !msg.id) return; // Skip invalid messages
+            // Restore chat messages and images from history
+            history.forEach(item => {
+                if (!item || !item.id) return; // Skip invalid items
                 
+                if (item.type === 'image') {
+                    // Restore image
+                    this.updateImage(item.url, item.prompt);
+                    return;
+                }
+                
+                // Restore message
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
-                messageDiv.dataset.id = msg.id;
+                messageDiv.dataset.id = item.id;
                 
                 const controls = document.createElement('div');
                 controls.className = 'edit-controls';
@@ -406,7 +413,7 @@ class StoryApp {
         });
     }
 
-    updateImage(imageUrl) {
+    updateImage(imageUrl, prompt = '') {
         const imageContainer = document.getElementById('images-container');
         const imageWrapper = document.createElement('div');
         imageWrapper.className = 'card bg-base-300 shadow-lg';
@@ -421,6 +428,17 @@ class StoryApp {
         imageBody.appendChild(image);
         imageWrapper.appendChild(imageBody);
         imageContainer.insertBefore(imageWrapper, imageContainer.firstChild);
+
+        // Add image to chat history
+        const imageData = {
+            type: 'image',
+            url: imageUrl,
+            prompt: prompt,
+            timestamp: Date.now(),
+            id: Date.now().toString()
+        };
+        this.chatHistory.push(imageData);
+        this.saveChatHistory();
     }
 
     handleKeywordClick(keyword) {

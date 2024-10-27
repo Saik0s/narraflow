@@ -15,10 +15,15 @@ class LLMResponse(BaseModel):
     dialog: List[DialogEntry]
     keywords: List[Keyword]
 
+class ImageData(BaseModel):
+    url: str
+    timestamp: int
+    prompt: str
+
 class ChatMessage(BaseModel):
     message: str
     prefix: str
-    history: List[dict] = []  # List of previous messages
+    history: List[dict] = []  # List of previous messages and images
     selected_keywords: List[str] = []
 
 class ImagePrompt(BaseModel):
