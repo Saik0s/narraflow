@@ -99,7 +99,11 @@
           <!-- Chat Column -->
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Chat History</h2>
-            <div id="chat-messages" class="flex-1 min-h-0 pb-4">
+            <div id="chat-messages" class="flex-1 min-h-0 pb-4"
+                 x-effect="$nextTick(() => {
+                   const container = document.getElementById('chat-messages');
+                   container.scrollTop = container.scrollHeight;
+                 })">
               <template x-for="(message, index) in $store.app.chatHistory" :key="index">
                 <div :class="['system', 'narrator', 'thoughts'].includes(message.author.toLowerCase()) ? 'chat chat-end' : 'chat chat-start'" :data-id="index">
                   <div class="chat-header text-xs text-base-content/40" x-text="message.author"></div>
