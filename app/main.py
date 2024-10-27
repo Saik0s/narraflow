@@ -30,18 +30,7 @@ async def chat_endpoint(message: ChatMessage):
         
         # Process chat message with full history
         llm_response = await process_chat(message.message, history)
-
-        # Generate image based on response
-        try:
-            image_prompt = ImagePrompt(prompt=llm_response.thoughts)
-            image_response = await generate_image(image_prompt)
-            logger.info("Successfully generated image")
-        except Exception as e:
-            logger.error(f"Image generation error: {str(e)}")
-            image_response = ImagePrompt(prompt="Error generating image")
-
-        # Return combined response
-        return {"llm_response": llm_response.dict(), "image": image_response.dict()}
+        return {"llm_response": llm_response.dict()}
 
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}")

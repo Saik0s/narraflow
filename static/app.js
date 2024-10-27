@@ -317,7 +317,7 @@ class StoryApp {
                 return;
             }
 
-            const { llm_response, image } = data;
+            const { llm_response } = data;
             
             // Update chat messages
             if (llm_response) {
@@ -331,12 +331,6 @@ class StoryApp {
                 if (this.imageSettings.enabled && this.imageSettings.mode === 'after_chat') {
                     await this.generateImage();
                 }
-            }
-            
-            // Update image if provided directly
-            if (image && image.image_url) {
-                this.updateImage(image.image_url);
-                this.lastImageGeneration = Date.now();
             }
 
         } catch (error) {
