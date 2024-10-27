@@ -35,6 +35,9 @@ class ImagePrompt(BaseModel):
     positive: str = Field(..., description="Positive prompt")
     negative: str = Field(..., description="Negative prompt")
 
+    class Config:
+        from_attributes = True
+
 
 class ImagePromptDetails(BaseModel):
     """Structure for generating detailed image prompts"""
@@ -89,6 +92,9 @@ class ImagePromptDetails(BaseModel):
         )
         return ImagePrompt(positive=positive_prompt, negative=self.negative_prompt)
 
+    class Config:
+        from_attributes = True
+
 
 # Initialize Anthropic client with instructor
 client = instructor.from_anthropic(AsyncAnthropic())
@@ -129,13 +135,13 @@ async def generate_prompt(imageGen: ImageGenerationRequest) -> ImagePrompt:
         )
 
         logger.info(
-            f"Generated structured prompt: {prompt.to_prompt().model_dump_json(include=2)}"
+            f"Generated structured prompt: {prompt.to_prompt().model_dump_json(indent=2)}"
         )
         return prompt.to_prompt()
 
     except Exception as e:
         logger.error(f"Error generating prompt: {e}")
-        return "Placeholder image"
+        raise e
 
 
 async def upload_to_minio(file_path: str) -> str:
