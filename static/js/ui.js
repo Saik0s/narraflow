@@ -19,13 +19,24 @@ export class UI {
     }
 
     setupEventListeners() {
-        // Add form submit handler
-        document.getElementById('chat-form').addEventListener('submit', (e) => {
-            e.preventDefault(); // Prevent form submission
+        // Use button click instead of form submit
+        const sendButton = document.getElementById('send-button');
+        sendButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             this.handleSendMessage();
         });
         
-        this.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+        // Handle Enter key in input field
+        this.messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleSendMessage();
+            } else {
+                this.handleInputKeydown(e);
+            }
+        });
         this.messageInput.addEventListener('input', () => this.updateSendButtonState());
         this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
         this.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
@@ -44,6 +55,10 @@ export class UI {
     }
 
     async handleSendMessage() {
+        // Prevent any form submission
+        event?.preventDefault();
+        event?.stopPropagation();
+
         if (!this.isMessageValid() || appState.isProcessing) return;
 
         const message = this.messageInput.value.trim();
