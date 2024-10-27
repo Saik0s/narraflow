@@ -127,9 +127,9 @@ body {
 .image-area {
     text-align: center;
     padding: 1rem;
-    background: white;
+    background: var(--message-bg);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 #current-image {
@@ -281,10 +281,10 @@ body {
 }
 
 .keywords-panel {
-    background: #fff;
+    background: var(--message-bg);
     padding: 1rem;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     margin-bottom: 0.5rem;
 }
 
