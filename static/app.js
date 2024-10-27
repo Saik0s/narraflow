@@ -284,6 +284,11 @@ class StoryApp {
         this.commandHistory.unshift(message);
         this.historyIndex = -1;
         
+        // Clear keywords after getting their values
+        const selectedKeywordsArray = Array.from(this.selectedKeywords);
+        this.selectedKeywords.clear();
+        this.keywords.innerHTML = ''; // Clear keyword display
+        
         const messageObj = {
             content: message,
             timestamp: Date.now(),
@@ -443,13 +448,18 @@ class StoryApp {
 
     handleKeywordClick(keyword) {
         const keywordElement = event.target;
-        if (this.selectedKeywords.has(keyword.text)) {
+        const isSelected = this.selectedKeywords.has(keyword.text);
+        
+        if (isSelected) {
             this.selectedKeywords.delete(keyword.text);
             keywordElement.classList.remove('selected');
         } else {
             this.selectedKeywords.add(keyword.text);
             keywordElement.classList.add('selected');
         }
+        
+        // Update send button state after keyword selection changes
+        this.updateSendButtonState();
     }
 
     async handleReaction(reaction) {
