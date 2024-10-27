@@ -446,7 +446,6 @@ export class UI {
     updateSendButtonState() {
         this.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
     }
-}
     async handleImageGeneration(state) {
         if (Date.now() - appState.lastImageGeneration < 5000) {
             console.log('Skipping image generation - too soon');
@@ -480,3 +479,4 @@ export class UI {
             this.appendErrorMessage('Failed to generate image');
         }
     }
+}
