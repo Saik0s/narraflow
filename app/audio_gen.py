@@ -28,8 +28,8 @@ async def generate_audio(text: str) -> AudioResponse:
             text=text,
             model_id="eleven_turbo_v2_5",
             voice_settings=VoiceSettings(
-                stability=0.0,
-                similarity_boost=1.0,
+                stability=0.5,
+                similarity_boost=0.7,
                 style=0.0,
                 use_speaker_boost=True,
             ),
