@@ -16,6 +16,9 @@ from app.logging_config import setup_logging
 import json
 from app.models import AudioGenerationRequest, AudioResponse
 from app.audio_gen import generate_audio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = setup_logging()
 

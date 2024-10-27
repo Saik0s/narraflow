@@ -19,7 +19,7 @@ async def generate_audio(text: str) -> AudioResponse:
 
         # Generate audio bytes
         audio_response = client.text_to_speech.convert(
-            voice_id="cgSgspJ2msm6clMCkdW9",  # Adam pre-made voice
+            voice_id=os.getenv("ELEVEN_VOICE_ID"),
             output_format="mp3_22050_32",
             text=text,
             model_id="eleven_turbo_v2_5",

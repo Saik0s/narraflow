@@ -24,12 +24,8 @@ minio = "^7.2.10"
 rich = "^13.9.3"
 nest-asyncio = "^1.6.0"
 pyngrok = "^7.2.0"
-
+python-dotenv = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.plugins.dotenv]
-ignore = "false"
-location = ".env"
