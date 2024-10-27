@@ -404,7 +404,11 @@ class StoryApp {
         messageDiv.appendChild(controls);
         messageDiv.appendChild(contentDiv);
         this.chatMessages.appendChild(messageDiv);
-        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        
+        // Ensure smooth scroll to bottom
+        requestAnimationFrame(() => {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        });
         this.saveChatHistory();
     }
 
@@ -426,6 +430,9 @@ class StoryApp {
         const imageWrapper = document.createElement('div');
         imageWrapper.className = 'card bg-base-300 shadow-lg';
         
+        // Scroll container to bottom before adding new image
+        const shouldScroll = imageContainer.scrollHeight - imageContainer.scrollTop === imageContainer.clientHeight;
+        
         const imageBody = document.createElement('div');
         imageBody.className = 'card-body p-4';
         
@@ -436,6 +443,11 @@ class StoryApp {
         imageBody.appendChild(image);
         imageWrapper.appendChild(imageBody);
         imageContainer.insertBefore(imageWrapper, imageContainer.firstChild);
+        
+        // Scroll to bottom if we were at bottom before
+        if (shouldScroll) {
+            imageContainer.scrollTop = imageContainer.scrollHeight;
+        }
 
         // Add image to chat history
         const imageData = {
