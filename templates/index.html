@@ -315,20 +315,17 @@
 
                 showError(message) {
                   const notification = document.createElement('div');
-                  notification.innerHTML = /* html */ `
-                    <div class="toast toast-top toast-end">
-                      <div class="alert alert-error">
-                        <span>\${message}</span>
-                      </div>
+                  notification.className = 'toast toast-top toast-end';
+                  notification.innerHTML = `
+                    <div class="alert alert-error">
+                      <span>${message}</span>
                     </div>
                   `;
                   document.body.appendChild(notification);
-                  const notificationEl = notification.firstElementChild;
-                  document.body.appendChild(notificationEl);
-                  setTimeout(() => notificationEl.remove(), 3000);
+                  setTimeout(() => notification.remove(), 3000);
                 }
               }"
-              @submit.prevent="handleSendMessage()">
+              @submit.prevent="handleSendMessage">
           <input type="text" 
                  x-model="message"
                  placeholder="Type your message..." 
