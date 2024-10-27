@@ -17,14 +17,14 @@ async def generate_audio(text: str) -> AudioResponse:
     try:
         # Set your ElevenLabs API key
         set_api_key(os.getenv("ELEVENLABS_API_KEY"))
-        
+
         # Generate audio bytes
         audio_bytes = generate(
             text=text,
-            voice="Josh",  # You can change the voice as needed
-            model="eleven_monolingual_v1"
+            voice="Jessica",  # You can change the voice as needed
+            model="eleven_turbo_v2_5",
         )
-        
+
         # Initialize MinIO client
         minio_client = Minio(
             os.getenv("MINIO_ENDPOINT", "minio:9000"),
@@ -32,16 +32,16 @@ async def generate_audio(text: str) -> AudioResponse:
             secret_key=os.getenv("MINIO_SECRET_KEY"),
             secure=False  # Set to True if using HTTPS
         )
-        
+
         bucket_name = os.getenv("MINIO_BUCKET_NAME", "audio-files")
-        
+
         # Ensure bucket exists
         if not minio_client.bucket_exists(bucket_name):
             minio_client.make_bucket(bucket_name)
-        
+
         # Create unique filename
         filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
-        
+
         # Upload to MinIO
         audio_bytes_io = io.BytesIO(audio_bytes)
         minio_client.put_object(
@@ -51,15 +51,15 @@ async def generate_audio(text: str) -> AudioResponse:
             length=len(audio_bytes),
             content_type="audio/mpeg"
         )
-        
+
         # Generate URL
         url = minio_client.presigned_get_object(
             bucket_name,
             filename,
             expires=7 * 24 * 60 * 60  # URL expires in 7 days
         )
-        
+
         return AudioResponse(url=url)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
