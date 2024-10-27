@@ -149,7 +149,8 @@
                 <div class="carousel-item h-auto w-full relative group">
                   <img
                     x-intersect:enter="loadImage($el, image.url)"
-                    class="rounded-box w-full h-auto opacity-0 transition-opacity duration-300"
+                    class="rounded-box w-full h-auto opacity-0 transition-opacity duration-300 cursor-pointer"
+                    @click="$store.app.openImageModal(image)"
                     src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
                   <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button class="btn btn-sm btn-circle btn-error" @click="$store.app.deleteImage(index)">
@@ -261,6 +262,27 @@
       <div class="modal-action">
         <button class="btn btn-primary" @click="$store.app.saveConfig()">Save</button>
         <button class="btn" @click="$store.app.closeConfig()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div x-show="$store.app.selectedImage"
+       class="modal modal-open"
+       @click.self="$store.app.closeImageModal()"
+       @keydown.escape.window="$store.app.closeImageModal()">
+    <div class="modal-box max-w-4xl h-auto relative bg-base-200 p-0 overflow-hidden">
+      <div class="relative">
+        <img 
+          :src="$store.app.selectedImage?.url" 
+          class="w-full h-auto rounded-lg"
+          alt="Selected image">
+        <button 
+          class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
+          @click="$store.app.closeImageModal()">✕</button>
+      </div>
+      <div class="p-4">
+        <p class="text-sm" x-text="$store.app.selectedImage?.prompt"></p>
       </div>
     </div>
   </div>

@@ -30,6 +30,7 @@ document.addEventListener('alpine:init', () => {
       mode: 'after_chat',
       interval_seconds: 10
     },
+    selectedImage: null,
     init() {
       this.loadFromStorage();
       this.applyTheme(this.theme);
@@ -183,6 +184,16 @@ document.addEventListener('alpine:init', () => {
 
     closeConfig() {
       this.showConfigModal = false;
+    },
+
+    openImageModal(image) {
+      this.selectedImage = image;
+      document.body.style.overflow = 'hidden';
+    },
+
+    closeImageModal() {
+      this.selectedImage = null;
+      document.body.style.overflow = 'auto';
     },
 
     saveConfig() {

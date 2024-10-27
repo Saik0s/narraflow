@@ -211,3 +211,32 @@ img:not(.lazy) {
     visibility: visible;
     opacity: 1;
 }
+
+/* Modal styles */
+.modal-box img {
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.modal-box {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-box .relative {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Smooth transitions for modal */
+.modal {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.modal-box {
+    transition: transform 0.2s ease-in-out;
+}
