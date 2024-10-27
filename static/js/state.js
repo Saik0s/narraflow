@@ -12,91 +12,94 @@ export class AppState {
             interval_seconds: 30
         };
         this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        
+        // Initialize state from storage
         this.loadFromStorage();
+        
+        // Set up theme listener
+        this.setupThemeListener();
+    }
+
+    setupThemeListener() {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            this.setTheme(e.matches ? 'dark' : 'light');
+        });
+    }
+
+    getState() {
+        return {
+            chatHistory: this.chatHistory,
+            selectedKeywords: Array.from(this.selectedKeywords),
+            commandHistory: this.commandHistory,
+            imageSettings: this.imageSettings,
+            lastImageGeneration: this.lastImageGeneration,
+            theme: this.theme
+        };
+    }
+
+    setState(newState) {
+        if (!newState) return;
+        
+        this.chatHistory = newState.chatHistory || [];
+        this.selectedKeywords = new Set(newState.selectedKeywords || []);
+        this.commandHistory = newState.commandHistory || [];
+        this.imageSettings = newState.imageSettings || this.imageSettings;
+        this.lastImageGeneration = newState.lastImageGeneration || 0;
+        this.theme = newState.theme || this.theme;
+        
+        this.saveToStorage();
     }
 
     loadFromStorage() {
         try {
             const saved = localStorage.getItem('appState');
             if (saved) {
-                const parsed = JSON.parse(saved);
-                this.chatHistory = parsed.chatHistory || [];
-                this.commandHistory = parsed.commandHistory || [];
-                this.imageSettings = parsed.imageSettings || this.imageSettings;
-                // Convert stored keywords back to Set
-                this.selectedKeywords = new Set(parsed.selectedKeywords || []);
+                this.setState(JSON.parse(saved));
             }
         } catch (error) {
             console.error('Failed to load state:', error);
         }
     }
 
-    saveState() {
+    saveToStorage() {
         try {
-            const state = {
-                chatHistory: this.chatHistory,
-                commandHistory: this.commandHistory,
-                imageSettings: this.imageSettings,
-                selectedKeywords: Array.from(this.selectedKeywords),
-                theme: this.theme
-            };
-            localStorage.setItem('appState', JSON.stringify(state));
-            console.log('State saved successfully');
+            localStorage.setItem('appState', JSON.stringify(this.getState()));
         } catch (error) {
             console.error('Failed to save state:', error);
         }
     }
 
-    setTheme(theme) {
-        this.theme = theme;
-        document.documentElement.setAttribute('data-theme', theme);
-        document.body.setAttribute('data-theme', theme);
-        this.saveState();
-    }
-
-    loadState() {
-        try {
-            const saved = localStorage.getItem('appState');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                this.chatHistory = parsed.chatHistory || [];
-                this.commandHistory = parsed.commandHistory || [];
-                this.imageSettings = parsed.imageSettings || this.imageSettings;
-                this.selectedKeywords = new Set(parsed.selectedKeywords || []);
-                console.log('State loaded successfully');
-            }
-        } catch (error) {
-            console.error('Failed to load state:', error);
-        }
-    }
-
     clearState() {
-        this.chatHistory = [];
-        this.selectedKeywords.clear();
-        this.commandHistory = [];
-        this.historyIndex = -1;
+        this.setState({
+            chatHistory: [],
+            selectedKeywords: [],
+            commandHistory: [],
+            imageSettings: {
+                enabled: true,
+                mode: 'after_chat',
+                interval_seconds: 30
+            },
+            lastImageGeneration: 0
+        });
         localStorage.removeItem('appState');
-        console.log('State cleared successfully');
     }
 
+    // Message management
     addMessage(message) {
-        if (!message || !message.id) return;
-
-        // Remove any existing message with the same ID
-        this.chatHistory = this.chatHistory.filter(msg => msg.id !== message.id);
-
-        this.chatHistory.push(message);
-        this.saveState();
+        if (!message?.id) return;
+        
+        this.chatHistory = [
+            ...this.chatHistory.filter(msg => msg.id !== message.id),
+            message
+        ];
+        this.saveToStorage();
     }
 
-    updateMessage(id, newContent) {
-        const index = this.chatHistory.findIndex(msg => msg.id === id);
-        if (index !== -1) {
-            const message = this.chatHistory[index];
-            if (message.messages && message.messages.length > 0) {
-                message.messages[0].content = newContent;
-                this.saveState();
-            }
+    updateMessage(id, content) {
+        const message = this.chatHistory.find(msg => msg.id === id);
+        if (message?.messages?.[0]) {
+            message.messages[0].content = content;
+            this.saveToStorage();
         }
     }
 
@@ -104,37 +107,40 @@ export class AppState {
         const initialLength = this.chatHistory.length;
         this.chatHistory = this.chatHistory.filter(msg => msg.id !== id);
         if (this.chatHistory.length !== initialLength) {
-            this.saveState();
+            this.saveToStorage();
         }
     }
 
+    // Keyword management
     toggleKeyword(keyword) {
         if (!keyword) return;
-
+        
         if (this.selectedKeywords.has(keyword)) {
             this.selectedKeywords.delete(keyword);
         } else {
             this.selectedKeywords.add(keyword);
         }
-        this.saveState();
+        this.saveToStorage();
     }
 
+    // Settings management
     updateImageSettings(settings) {
         if (!settings) return;
-
+        
         this.imageSettings = {
             ...this.imageSettings,
             ...settings,
-            interval_seconds: settings.interval_seconds
+            interval_seconds: settings.interval_seconds 
                 ? Math.max(5, parseInt(settings.interval_seconds))
                 : this.imageSettings.interval_seconds
         };
-        this.saveState();
+        this.saveToStorage();
     }
 
-    clearState() {
-        localStorage.removeItem('appState');
-        this.initializeState();
+    setTheme(theme) {
+        this.theme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        this.saveToStorage();
     }
 }
 
