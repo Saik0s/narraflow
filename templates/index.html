@@ -178,6 +178,30 @@
       <h3 class="font-bold text-lg mb-4">System Configuration</h3>
 
       <div class="form-control gap-4">
+        <!-- Add configuration selector -->
+        <div class="flex gap-2">
+          <select
+            x-model="$store.app.config.selectedConfigIndex"
+            class="select select-bordered flex-1">
+            <option value="-1">Select a configuration...</option>
+            <template x-for="(config, index) in $store.app.config.savedConfigs" :key="config.id">
+              <option :value="index" x-text="config.name"></option>
+            </template>
+          </select>
+          <button
+            class="btn btn-secondary"
+            @click="$store.app.loadConfig()"
+            :disabled="$store.app.config.selectedConfigIndex < 0">
+            Load
+          </button>
+          <button
+            class="btn btn-accent"
+            @click="$store.app.addNewConfig()">
+            Save as Config
+          </button>
+        </div>
+
+        <!-- Existing form fields -->
         <div>
           <label class="label">
             <span class="label-text">Storyteller System Prompt</span>
@@ -201,7 +225,7 @@
 
       <div class="modal-action">
         <button class="btn btn-primary" @click="$store.app.saveConfig()">Save</button>
-        <button class="btn" @click="$store.app.closeConfig()">Cancel</button>
+        <button class="btn" @click="$store.app.closeConfig()">Close</button>
       </div>
     </div>
   </div>

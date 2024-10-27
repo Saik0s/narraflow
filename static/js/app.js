@@ -18,7 +18,9 @@ document.addEventListener('alpine:init', () => {
     showConfigModal: false,
     config: {
       storytellerPrompt: localStorage.getItem('storytellerPrompt') || '',
-      imagePrompt: localStorage.getItem('imagePrompt') || ''
+      imagePrompt: localStorage.getItem('imagePrompt') || '',
+      savedConfigs: JSON.parse(localStorage.getItem('savedConfigs')) || [],
+      selectedConfigIndex: -1
     },
     currentlyEditingMessageIndex: null,
     selectedAuthor: 'narrator',
@@ -166,9 +168,42 @@ document.addEventListener('alpine:init', () => {
     },
 
     saveConfig() {
+      // Save current state to localStorage
       localStorage.setItem('storytellerPrompt', this.config.storytellerPrompt);
       localStorage.setItem('imagePrompt', this.config.imagePrompt);
       this.closeConfig();
+    },
+
+    addNewConfig() {
+      // Get the next configuration number
+      const nextConfigNum = this.config.savedConfigs.length + 1;
+
+      // Create new configuration object
+      const newConfig = {
+        id: nextConfigNum,
+        name: `Configuration ${nextConfigNum}`,
+        storytellerPrompt: this.config.storytellerPrompt,
+        imagePrompt: this.config.imagePrompt
+      };
+
+      // Add to saved configs
+      this.config.savedConfigs.push(newConfig);
+
+      // Save to localStorage
+      localStorage.setItem('savedConfigs', JSON.stringify(this.config.savedConfigs));
+
+      // Select the new config
+      this.config.selectedConfigIndex = this.config.savedConfigs.length - 1;
+    },
+
+    loadConfig() {
+      if (this.config.selectedConfigIndex >= 0) {
+        const selectedConfig = this.config.savedConfigs[this.config.selectedConfigIndex];
+        if (selectedConfig) {
+          this.config.storytellerPrompt = selectedConfig.storytellerPrompt;
+          this.config.imagePrompt = selectedConfig.imagePrompt;
+        }
+      }
     },
 
     saveState() {
