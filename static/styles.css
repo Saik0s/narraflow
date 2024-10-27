@@ -174,16 +174,67 @@ body {
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 8px;
-    background: var(--message-bg);
     color: var(--text-color);
-    border: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
-.message.narrator-message { border-left: 4px solid var(--plot-color); }
-.message.character-message { border-left: 4px solid var(--action-color); }
-.message.system-message { border-left: 4px solid var(--emotion-color); }
-.message.thought-message { border-left: 4px solid var(--object-color); }
+.message.narrator-message { 
+    background: linear-gradient(to right, var(--plot-color) 0%, var(--message-bg) 3%);
+}
+.message.character-message { 
+    background: linear-gradient(to right, var(--action-color) 0%, var(--message-bg) 3%);
+}
+.message.system-message { 
+    background: linear-gradient(to right, var(--emotion-color) 0%, var(--message-bg) 3%);
+}
+.message.thought-message { 
+    background: linear-gradient(to right, var(--object-color) 0%, var(--message-bg) 3%);
+}
+
+.message .edit-controls {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message:hover .edit-controls {
+    opacity: 1;
+}
+
+.message .edit-controls button {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.message .edit-controls button:hover {
+    background: var(--button-hover);
+}
+
+.message.editing {
+    padding-top: 2.5rem;
+}
+
+.message .edit-input {
+    width: 100%;
+    min-height: 60px;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    resize: vertical;
+}
 
 .message.error-message {
     background-color: var(--error-color);

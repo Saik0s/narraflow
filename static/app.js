@@ -360,15 +360,22 @@ class StoryApp {
     appendMessage(response) {
         const messageDiv = document.createElement('div');
         const messageType = this.getMessageType(response);
-        messageDiv.className = `message ${messageType}-message`;
+        messageDiv.className = `message ${messageType}-message card`;
         messageDiv.dataset.id = Date.now().toString();
         
         const controls = document.createElement('div');
         controls.className = 'edit-controls';
         controls.innerHTML = `
-            <button onclick="app.editMessage('${messageDiv.dataset.id}')">Edit</button>
-            <button onclick="app.deleteMessage('${messageDiv.dataset.id}')">Delete</button>
+            <button onclick="app.editMessage('${messageDiv.dataset.id}')">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button onclick="app.deleteMessage('${messageDiv.dataset.id}')">
+                <i class="fas fa-trash"></i> Delete
+            </button>
         `;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
         
         // Create message object for history
         const messageObj = {
@@ -385,18 +392,19 @@ class StoryApp {
             const thoughts = document.createElement('thinking');
             thoughts.className = 'thoughts';
             thoughts.textContent = response.thoughts;
-            messageDiv.appendChild(thoughts);
+            contentDiv.appendChild(thoughts);
         }
         
         response.dialog.forEach(entry => {
             const text = document.createElement('p');
             text.className = `dialog ${entry.speaker.toLowerCase()}`;
             text.textContent = `${entry.speaker}: ${entry.text}`;
-            messageDiv.appendChild(text);
+            contentDiv.appendChild(text);
         });
         
-        this.chatMessages.appendChild(messageDiv);
         messageDiv.appendChild(controls);
+        messageDiv.appendChild(contentDiv);
+        this.chatMessages.appendChild(messageDiv);
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
         this.saveChatHistory();
     }
