@@ -19,7 +19,6 @@ class ChatMessage(BaseModel):
     message: str
     prefix: str
     history: List[dict] = []  # List of previous messages
-    message_id: Optional[str] = None  # For editing/deleting specific messages
 
 class ImagePrompt(BaseModel):
     prompt: str
