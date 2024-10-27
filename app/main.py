@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.models import ChatMessage, ImagePrompt, ImageReaction
+from app.models import ChatMessage, ImagePrompt
 from app.llm import process_chat
-from app.image_gen import generate_image, process_reaction
+from app.image_gen import generate_image
 import logging
 
 # Configure logging
@@ -27,7 +27,7 @@ async def chat_endpoint(message: ChatMessage):
         logger.info("Processing chat message")
         # Extract history messages
         history = [msg.get('content', '') for msg in message.history]
-        
+
         # Process chat message with full history
         llm_response = await process_chat(message.message, history)
         return {"llm_response": llm_response.dict()}
@@ -46,7 +46,6 @@ async def generate_image_endpoint(prompt: ImagePrompt):
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
         return {"error": f"Error generating image: {str(e)}"}, 500
-
 
 
 if __name__ == "__main__":
