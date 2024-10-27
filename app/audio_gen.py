@@ -1,9 +1,11 @@
-from elevenlabs import generate, set_api_key
+from elevenlabs import VoiceSettings
+from elevenlabs.client import ElevenLabs
 from minio import Minio
 from minio.error import S3Error
 from fastapi import HTTPException
 import os
 import io
+import uuid
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -15,15 +17,30 @@ class AudioResponse(BaseModel):
 
 async def generate_audio(text: str) -> AudioResponse:
     try:
-        # Set your ElevenLabs API key
-        set_api_key(os.getenv("ELEVENLABS_API_KEY"))
+        # Initialize ElevenLabs client
+        client = ElevenLabs(
+            api_key=os.getenv("ELEVENLABS_API_KEY"),
+        )
 
         # Generate audio bytes
-        audio_bytes = generate(
+        audio_response = client.text_to_speech.convert(
+            voice_id="pNInz6obpgDQGcFmaJgB",  # Adam pre-made voice
+            output_format="mp3_22050_32",
             text=text,
-            voice="Jessica",  # You can change the voice as needed
-            model="eleven_turbo_v2_5",
+            model_id="eleven_turbo_v2_5",
+            voice_settings=VoiceSettings(
+                stability=0.0,
+                similarity_boost=1.0,
+                style=0.0,
+                use_speaker_boost=True,
+            ),
         )
+
+        # Collect all chunks into a single bytes object
+        audio_bytes = b''
+        for chunk in audio_response:
+            if chunk:
+                audio_bytes += chunk
 
         # Initialize MinIO client
         minio_client = Minio(
@@ -39,8 +56,8 @@ async def generate_audio(text: str) -> AudioResponse:
         if not minio_client.bucket_exists(bucket_name):
             minio_client.make_bucket(bucket_name)
 
-        # Create unique filename
-        filename = f"audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        # Create unique filename using UUID
+        filename = f"audio_{uuid.uuid4()}.mp3"
 
         # Upload to MinIO
         audio_bytes_io = io.BytesIO(audio_bytes)
