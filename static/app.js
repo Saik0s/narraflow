@@ -62,11 +62,13 @@ class StoryApp {
     }
 
     loadChatHistory() {
+        console.log('Loading chat history from localStorage');
         const saved = localStorage.getItem('chatHistory');
         let history = [];
         
         try {
             history = saved ? JSON.parse(saved) : [];
+            console.log('Loaded chat history:', history);
             
             // Restore chat messages and images from history
             history.forEach(item => {
@@ -120,12 +122,15 @@ class StoryApp {
 
     saveChatHistory() {
         try {
+            console.log('Saving chat history...');
             // Filter out invalid messages before saving
             const validHistory = this.chatHistory.filter(msg => 
                 msg && msg.id && 
                 (msg.thoughts || (Array.isArray(msg.dialog) && msg.dialog.length > 0))
             );
+            console.log('Filtered valid history:', validHistory);
             localStorage.setItem('chatHistory', JSON.stringify(validHistory));
+            console.log('Chat history saved successfully');
         } catch (error) {
             console.error('Failed to save chat history:', error);
         }
@@ -381,8 +386,10 @@ class StoryApp {
             id: messageDiv.dataset.id,
             thoughts: response.thoughts || '',
             dialog: response.dialog || [],
+            keywords: response.keywords || [],
             timestamp: Date.now()
         };
+        console.log('Created message object:', messageObj);
         
         // Add to chat history
         this.chatHistory.push(messageObj);
@@ -413,8 +420,10 @@ class StoryApp {
     }
 
     updateKeywords(keywords) {
+        console.log('Updating keywords display:', keywords);
         this.keywords.innerHTML = '';
         keywords.forEach(keyword => {
+            console.log('Creating keyword element:', keyword);
             const span = document.createElement('span');
             span.className = 'keyword';
             span.dataset.category = keyword.category;
@@ -462,13 +471,16 @@ class StoryApp {
     }
 
     handleKeywordClick(keyword, event) {
+        console.log('Keyword clicked:', keyword);
         const keywordElement = event.target;
         const isSelected = this.selectedKeywords.has(keyword.text);
         
         if (isSelected) {
+            console.log('Deselecting keyword:', keyword.text);
             this.selectedKeywords.delete(keyword.text);
             keywordElement.classList.remove('selected');
         } else {
+            console.log('Selecting keyword:', keyword.text);
             this.selectedKeywords.add(keyword.text);
             keywordElement.classList.add('selected');
         }
