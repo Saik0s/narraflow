@@ -50,7 +50,7 @@ export async function generateImage(history) {
 
     return await response.json();
   } catch (error) {
-    console.error('Failed to generate image:', error);
+    console.error('Failed to generate images:', error);
     throw error;
   }
 }
