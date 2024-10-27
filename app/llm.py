@@ -1,49 +1,37 @@
 import logging
-from openai import AsyncOpenAI
+from anthropic import AsyncAnthropic
 import instructor
-from app.models import LLMResponse, Keyword, Message, ChatMessage
+from app.models import LLMResponse, LLMKeyword, LLMMessage, NewChatMessage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-openai_client = AsyncOpenAI()
-client = instructor.from_openai(openai_client)
+anthropic_client = AsyncAnthropic()
+client = instructor.from_anthropic(anthropic_client)
 
 
-async def process_chat(chat_data: ChatMessage) -> LLMResponse:
+async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
     """
     Process a chat message and generate a response
-
-    Args:
-        chat_data: ChatMessage object containing message, author, history, and selected keywords
-
-    Returns:
-        LLMResponse object containing messages and keywords
     """
-    # Format history for better context
-    formatted_history = []
+    messages = []
     if chat_data.history:
-        for msg in chat_data.history[-10:]:  # Keep last 10 messages for context
-            if isinstance(msg, dict) and "messages" in msg:
-                for submsg in msg["messages"]:
-                    formatted_history.append(
-                        f"{submsg.get('author', 'User')}: {submsg.get('content', '')}"
-                    )
+        starting_role = "assistant" if len(chat_data.history) % 2 == 0 else "user"
+        for i, msg in enumerate(chat_data.history):
+            # Ensure we're working with Message objects
+            if isinstance(msg, dict):
+                msg = Message(**msg)
+            role = "user" if (i % 2 == 0) == (starting_role == "user") else "assistant"
+            messages.append({"role": role, "content": f"{msg.author}: {msg.content}"})
 
     # Add current message
-    current_msg = (
-        f"{chat_data.author + ': ' if chat_data.author else ''}{chat_data.message}"
+    messages.append(
+        {
+            "role": "user",
+            "content": f"{chat_data.author}: {chat_data.content}\n\n* selected keywords: {', '.join(chat_data.selectedKeywords)} *",
+        }
     )
-    formatted_history.append(current_msg)
-
-    # Add selected keywords if any
-    if chat_data.selected_keywords:
-        formatted_history.append(
-            f"Selected keywords: {', '.join(chat_data.selected_keywords)}"
-        )
-
-    context = "\n".join(formatted_history)
 
     system_prompt = """You are an interactive storytelling assistant. Your response must follow this exact structure:
     - messages: An array of message objects where each has:
@@ -62,28 +50,18 @@ async def process_chat(chat_data: ChatMessage) -> LLMResponse:
     Keep responses engaging and story-driven, ensuring all responses match the required structure exactly."""
 
     try:
-        logger.info(f"Processing chat message with context length: {len(context)}")
+        logger.info(f"Processing chat message with {len(messages)} messages")
 
-        response = await client.chat.completions.create(
-            model="gpt-4",
+        response = await client.messages.create(
+            model="claude-3-5-sonnet-20241022",
             response_model=LLMResponse,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": f"Generate a story response for: {context}",
-                },
-            ],
+            system=system_prompt,
+            messages=messages,
+            max_tokens=4096,
         )
 
-        # Validate response structure
-        try:
-            response_dict = response.dict()
-            logger.info("Successfully generated and validated response structure")
-            return response
-        except Exception as e:
-            logger.error(f"Response structure validation failed: {str(e)}")
-            raise ValueError("Invalid response structure from LLM")
+        logger.info("Successfully generated response structure")
+        return response
 
     except Exception as e:
         error_msg = f"Error in process_chat: {str(e)}"
@@ -91,10 +69,10 @@ async def process_chat(chat_data: ChatMessage) -> LLMResponse:
         # Return a graceful fallback response that matches the model structure
         return LLMResponse(
             messages=[
-                Message(
+                LLMMessage(
                     author="system",
                     content="There was an error generating the story response. Please try again.",
                 )
             ],
-            keywords=[Keyword(category="plot", text="story-interrupted")],
+            keywords=[LLMKeyword(category="plot", text="story-interrupted")],
         )

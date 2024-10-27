@@ -6,6 +6,6 @@ export const ui = new UI();
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    appState.loadState();
+    appState.loadFromStorage();
     ui.init();
 });

@@ -1,9 +1,8 @@
-from fastapi import Cookie, FastAPI, HTTPException, Request, Response, Form
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from app.models import ChatMessage, ImagePrompt
+from fastapi.responses import HTMLResponse, JSONResponse
+from app.models import LLMMessage, NewChatMessage, ImagePrompt, Message
 from app.llm import process_chat
 from app.image_gen import generate_image
 import logging
@@ -28,188 +27,52 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-# Add this class after the imports
-class ErrorHandlingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        try:
-            response = await call_next(request)
-            return response
-        except Exception as e:
-            logger.error(f"Error processing request: {str(e)}")
-            return JSONResponse(
-                status_code=500, content={"error": "An internal server error occurred"}
-            )
-
-
-# Add this line after creating the FastAPI app
-app.add_middleware(ErrorHandlingMiddleware)
-
-
-# State management (replace with database in production)
-class AppState:
-    def __init__(self):
-        self.chat_history = []
-        self.image_settings = {
-            "enabled": True,
-            "mode": "after_chat",
-            "interval_seconds": 30,
-        }
-        self.theme = "light"
-
-    def to_dict(self):
-        """Convert state to dictionary for JSON serialization."""
-        return {
-            "chat_history": self.chat_history,
-            "image_settings": self.image_settings,
-            "theme": self.theme,
-        }
-
-    def from_dict(self, data: dict):
-        """Load state from dictionary."""
-        self.chat_history = data.get("chat_history", [])
-        self.image_settings = data.get(
-            "image_settings",
-            {
-                "enabled": True,
-                "mode": "after_chat",
-                "interval_seconds": 30,
-            },
-        )
-        self.theme = data.get("theme", "light")
-
-
-# Create states directory if it doesn't exist
-STATES_DIR = Path("states")
-STATES_DIR.mkdir(exist_ok=True)
-
-
-class StateManager:
-    def __init__(self):
-        self.states: Dict[str, AppState] = {}
-        self.current_sessions: Dict[str, str] = {}  # cookie -> password_hash
-
-    def get_state_path(self, password: str) -> Path:
-        """Get the path to the state file for a given password."""
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        return STATES_DIR / f"{password_hash}.json"
-
-    def load_state(self, password: str) -> AppState:
-        """Load state from file or create new if doesn't exist."""
-        state_path = self.get_state_path(password)
-        if state_path.exists():
-            with open(state_path, "r") as f:
-                data = json.load(f)
-                state = AppState()
-                state.from_dict(data)
-                return state
-        return AppState()
-
-    def save_state(self, password: str, state: AppState):
-        """Save state to file."""
-        state_path = self.get_state_path(password)
-        with open(state_path, "w") as f:
-            json.dump(state.to_dict(), f)
-
-    def get_state(self, session_id: Optional[str] = None) -> AppState:
-        """Get state for current session or create new."""
-        if session_id and session_id in self.current_sessions:
-            password_hash = self.current_sessions[session_id]
-            return self.states.get(password_hash, AppState())
-        return AppState()
-
-
-state_manager = StateManager()
-
-
-# Models
-class Message(BaseModel):
-    content: str
-    author: Optional[str] = ""
-
-
-class ImageSettings(BaseModel):
-    enabled: bool
-    mode: str
-    interval_seconds: int
-
-
-# Add this function before the routes
-def extract_keywords_from_history(
-    chat_history: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
-    """Extract keywords from chat history."""
-    all_keywords = []
-    for message in chat_history:
-        if isinstance(message, dict) and "keywords" in message:
-            all_keywords.extend(message["keywords"])
-
-    # Deduplicate keywords while preserving order
-    seen = set()
-    unique_keywords = []
-    for keyword in all_keywords:
-        key = (keyword["text"], keyword["category"])
-        if key not in seen:
-            seen.add(key)
-            unique_keywords.append(keyword)
-
-    return unique_keywords
-
-
-# Routes
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request, session_id: Optional[str] = Cookie(None)):
-    state = state_manager.get_state(session_id)
+async def root(request: Request):
+    """Render the main page"""
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "initial_state": state.to_dict() if state else None},
+        {
+            "request": request,
+        },
     )
 
 
-
-
 @app.post("/api/chat")
-async def chat(chat_message: ChatMessage):
+async def chat(chat_message: NewChatMessage):
     try:
-        logger.info(f"Received chat request with state: {chat_message.state}")
-        
-        # Process chat with complete state context
+        logger.info(f"Received chat request: {chat_message}")
+
+        # Ensure history is properly converted to Message objects
+        validated_history = [
+            Message(author=msg.author, content=msg.content)
+            for msg in chat_message.history
+        ]
+        chat_message.history = validated_history
+
         response = await process_chat(chat_message)
-        
         logger.info(f"Generated response: {response}")
-        return {"llm_response": response}
+
+        response.messages.insert(
+            0, LLMMessage(author=chat_message.author, content=chat_message.content)
+        )
+
+        return {
+            "llm_response": {
+                "messages": [msg.model_dump() for msg in response.messages],
+                "keywords": [kw.model_dump() for kw in response.keywords],
+            }
+        }
     except Exception as e:
         logger.error(f"Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/history")
-async def clear_history(request: Request):
-    state = state_manager.get_state()
-    state.chat_history = []
-    return templates.TemplateResponse(
-        "partials/messages.html", {"request": request, "messages": []}
-    )
-
-
-
-
-
-
-@app.post("/api/settings/image")
-async def update_image_settings(settings: ImageSettings):
-    state = state_manager.get_state()
-    state.image_settings.update(settings.dict())
-    return {"success": True}
-
-
 @app.post("/api/image/generate")
 async def generate_image_endpoint(prompt: ImagePrompt):
     try:
-        logger.info(f"Received image generation request with state: {prompt.state}")
-        
-        # Generate image with complete state context
+        logger.info(f"Received image generation request: {prompt}")
         image_response = await generate_image(prompt)
-        
         logger.info(f"Generated image response: {image_response}")
         return image_response
     except Exception as e:
@@ -217,90 +80,15 @@ async def generate_image_endpoint(prompt: ImagePrompt):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# New routes for state management
-@app.post("/api/validate-password")
-async def validate_password(
-    password: str, response: Response, session_id: Optional[str] = Cookie(None)
-):
-    if not password:
-        raise HTTPException(status_code=400, message="Password is required")
-
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-
-    # Generate new session ID if needed
-    if not session_id:
-        session_id = hashlib.sha256(os.urandom(32)).hexdigest()
-        response.set_cookie(key="session_id", value=session_id)
-
-    # Associate session with password
-    state_manager.current_sessions[session_id] = password_hash
-
-    # Load or create state
-    state = state_manager.load_state(password)
-    state_manager.states[password_hash] = state
-
-    return {"status": "success"}
-
-
-@app.post("/api/save-state")
-async def save_state(password: str, session_id: Optional[str] = Cookie(None)):
-    if not password or not session_id:
-        raise HTTPException(status_code=400, message="Password and session required")
-
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    if session_id not in state_manager.current_sessions:
-        raise HTTPException(status_code=401, message="Invalid session")
-
-    state = state_manager.states.get(password_hash)
-    if not state:
-        raise HTTPException(status_code=404, message="No state found")
-
-    state_manager.save_state(password, state)
-    return {"status": "success"}
-
-
-@app.post("/api/load-state")
-async def load_state(
-    request: Request,  # Add request parameter
-    password: str,
-    session_id: Optional[str] = Cookie(None),
-):
-    if not password:
-        raise HTTPException(status_code=400, message="Password is required")
-
-    state = state_manager.load_state(password)
-
-    # Update session
-    if session_id:
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        state_manager.current_sessions[session_id] = password_hash
-        state_manager.states[password_hash] = state
-
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,  # Add request to context
-            "initial_state": state.to_dict(),
-        },
-    )
-
-
-# Add this new route after your existing routes
-
-
 @app.get("/api/images")
 async def get_images():
-    """
-    Returns a list of available image paths from the static/images directory
-    """
+    """Returns a list of available image paths from the static/images directory"""
     images_dir = Path("static/images")
     if not images_dir.exists():
         return {"images": []}
 
     image_files = [
-        f"/static/images/{f.name}"
-        for f in images_dir.iterdir()
-        if f.suffix.lower() in [".jpg", ".jpeg", ".png", ".gif"]
+        f"/static/images/{f.name}" for f in images_dir.glob("*.{jpg,png,gif}")
     ]
     return {"images": image_files}
 
