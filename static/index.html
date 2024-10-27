@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container" data-theme="light">
+        <div class="top-controls">
+            <button id="clear-history">Clear History</button>
+            <label class="theme-toggle">
+                <input type="checkbox" id="dark-mode-toggle">
+                <span class="theme-label">Dark Mode</span>
+            </label>
+        </div>
         <div class="image-area">
             <img id="current-image" src="" alt="Story Image">
             <div class="image-reactions">

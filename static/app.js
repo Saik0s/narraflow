@@ -5,10 +5,13 @@ class StoryApp {
         this.chatMessages = document.getElementById('chat-messages');
         this.keywords = document.getElementById('keywords');
         this.currentImage = document.getElementById('current-image');
+        this.darkModeToggle = document.getElementById('dark-mode-toggle');
+        this.clearHistoryBtn = document.getElementById('clear-history');
         
         this.setupEventListeners();
         this.commandHistory = [];
         this.historyIndex = -1;
+        this.chatHistory = this.loadChatHistory();
         this.isProcessing = false;
         this.imageGenTimer = null;
         this.lastImageGeneration = Date.now();
@@ -30,6 +33,44 @@ class StoryApp {
         document.querySelectorAll('.reaction').forEach(button => {
             button.addEventListener('click', () => this.handleReaction(button.dataset.reaction));
         });
+
+        this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
+        this.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
+        
+        // Listen for system dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            this.darkModeToggle.checked = e.matches;
+            this.setTheme(e.matches ? 'dark' : 'light');
+        });
+
+        // Initial dark mode check
+        this.darkModeToggle.checked = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.setTheme(this.darkModeToggle.checked ? 'dark' : 'light');
+    }
+
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    toggleDarkMode() {
+        this.setTheme(this.darkModeToggle.checked ? 'dark' : 'light');
+    }
+
+    loadChatHistory() {
+        const saved = localStorage.getItem('chatHistory');
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    saveChatHistory() {
+        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+    }
+
+    clearHistory() {
+        if (confirm('Are you sure you want to clear the chat history?')) {
+            this.chatHistory = [];
+            this.saveChatHistory();
+            this.chatMessages.innerHTML = '';
+        }
     }
 
     setupImageControls() {
@@ -167,6 +208,13 @@ class StoryApp {
 
         this.commandHistory.unshift(message);
         this.historyIndex = -1;
+        
+        const messageObj = {
+            content: message,
+            timestamp: Date.now(),
+            id: Date.now().toString()
+        };
+        this.chatHistory.push(messageObj);
 
         let prefix = '';
         if (message.startsWith('@')) prefix = 'character';
@@ -183,7 +231,8 @@ class StoryApp {
                 },
                 body: JSON.stringify({
                     message: message,
-                    prefix: prefix
+                    prefix: prefix,
+                    history: this.chatHistory
                 })
             });
 
@@ -240,6 +289,14 @@ class StoryApp {
     appendMessage(response) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
+        messageDiv.dataset.id = Date.now().toString();
+        
+        const controls = document.createElement('div');
+        controls.className = 'edit-controls';
+        controls.innerHTML = `
+            <button onclick="app.editMessage('${messageDiv.dataset.id}')">Edit</button>
+            <button onclick="app.deleteMessage('${messageDiv.dataset.id}')">Delete</button>
+        `;
         
         if (response.thoughts) {
             const thoughts = document.createElement('p');
@@ -256,7 +313,9 @@ class StoryApp {
         });
         
         this.chatMessages.appendChild(messageDiv);
+        messageDiv.appendChild(controls);
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        this.saveChatHistory();
     }
 
     updateKeywords(keywords) {
@@ -299,6 +358,70 @@ class StoryApp {
             console.error('Failed to send reaction:', error);
             this.appendErrorMessage('Failed to send image reaction');
         }
+    }
+
+    editMessage(messageId) {
+        const messageDiv = this.chatMessages.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        const currentContent = messageDiv.querySelector('.dialog').textContent;
+        messageDiv.classList.add('editing');
+        
+        const editInput = document.createElement('textarea');
+        editInput.className = 'edit-input';
+        editInput.value = currentContent;
+        
+        const saveButton = document.createElement('button');
+        saveButton.textContent = 'Save';
+        saveButton.onclick = () => this.saveEdit(messageId, editInput.value);
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = 'Cancel';
+        cancelButton.onclick = () => this.cancelEdit(messageId);
+        
+        const editControls = document.createElement('div');
+        editControls.className = 'edit-controls';
+        editControls.appendChild(saveButton);
+        editControls.appendChild(cancelButton);
+        
+        messageDiv.appendChild(editInput);
+        messageDiv.appendChild(editControls);
+    }
+
+    saveEdit(messageId, newContent) {
+        const messageDiv = this.chatMessages.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        const messageIndex = this.chatHistory.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+            this.chatHistory[messageIndex].content = newContent;
+            this.saveChatHistory();
+        }
+
+        messageDiv.querySelector('.dialog').textContent = newContent;
+        this.cancelEdit(messageId);
+    }
+
+    cancelEdit(messageId) {
+        const messageDiv = this.chatMessages.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        messageDiv.classList.remove('editing');
+        const editInput = messageDiv.querySelector('.edit-input');
+        const editControls = messageDiv.querySelector('.edit-controls');
+        if (editInput) editInput.remove();
+        if (editControls) editControls.remove();
+    }
+
+    deleteMessage(messageId) {
+        if (!confirm('Are you sure you want to delete this message?')) return;
+
+        const messageDiv = this.chatMessages.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        this.chatHistory = this.chatHistory.filter(m => m.id !== messageId);
+        this.saveChatHistory();
+        messageDiv.remove();
     }
 }
 
