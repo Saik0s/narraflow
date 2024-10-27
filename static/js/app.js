@@ -320,8 +320,15 @@ document.addEventListener('alpine:init', () => {
 
       try {
         const response = await generateImage(this.chatHistory);
-        if (response?.image_url) {
-          this.imageHistory.push(response.image_url);
+        if (response?.urls && response.urls.length > 0) {
+          // Store each image URL along with its prompt
+          response.urls.forEach(url => {
+            this.imageHistory.push({
+              url: url,
+              prompt: response.prompt,
+              timestamp: Date.now()
+            });
+          });
           this.lastImageGeneration = Date.now();
           this.saveState();
           // Dispatch custom event when images are updated

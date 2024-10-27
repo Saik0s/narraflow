@@ -48,7 +48,14 @@ export async function generateImage(history) {
       throw new Error(errorText);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Validate response format
+    if (!data.urls || !Array.isArray(data.urls) || !data.prompt) {
+      throw new Error('Invalid response format from image generation');
+    }
+
+    return data;
   } catch (error) {
     console.error('Failed to generate images:', error);
     throw error;

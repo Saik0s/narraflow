@@ -60,7 +60,6 @@ async def generate_image(prompt: str) -> ImageResponse:
     try:
         logger.info(f"Generating image with prompt: {prompt}")
 
-        # Subscribe to real-time updates with new model
         result = await fal_client.subscribe_async(
             "fal-ai/flux/schnell",
             arguments={
@@ -75,6 +74,7 @@ async def generate_image(prompt: str) -> ImageResponse:
         image_urls = [img["url"] for img in result["images"]]
         logger.info(f"Successfully generated {len(image_urls)} images")
 
+        # Return both URLs and prompt in response
         return ImageResponse(urls=image_urls, prompt=prompt)
 
     except Exception as e:
