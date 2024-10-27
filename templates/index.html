@@ -6,7 +6,6 @@
     <title>Interactive Story</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="{{ url_for('static', path='js/state-management.js') }}" defer></script>
     <!-- Add this line after the other CSS links -->
@@ -25,20 +24,8 @@
                        hx-post="/api/validate-password"
                        hx-trigger="change"
                        hx-swap="none">
-                <button class="btn btn-primary btn-sm"
-                        hx-post="/api/save-state"
-                        hx-include="#state-password"
-                        hx-swap="none">
-                    Save State
-                </button>
-                <button class="btn btn-secondary btn-sm"
-                        hx-post="/api/load-state"
-                        hx-include="#state-password"
-                        hx-swap="none"
-                        hx-trigger="click"
-                        hx-target="body">
-                    Load State
-                </button>
+                <button id="save-state-btn" class="btn btn-primary btn-sm">Save State</button>
+                <button id="load-state-btn" class="btn btn-secondary btn-sm">Load State</button>
             </div>
             <div class="flex-1">
                 <button hx-delete="/api/history"
@@ -65,10 +52,7 @@
                     <!-- Chat Column -->
                     <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
                         <h2 class="text-xl font-bold mb-4">Chat History</h2>
-                        <div id="chat-messages"
-                             class="flex-1 overflow-y-auto"
-                             hx-get="/api/messages"
-                             hx-trigger="load"></div>
+                        <div id="chat-messages" class="flex-1 overflow-y-auto"></div>
                     </div>
 
                     <!-- Images Column -->
@@ -120,9 +104,8 @@
         <!-- Bottom Panel -->
         <div class="bg-base-200 rounded-box shadow-lg p-4">
             <div id="keywords"
-                 class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2"
-                 hx-get="/api/keywords"
-                 hx-trigger="load"></div>
+                 class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2">
+            </div>
             <div class="flex flex-col gap-2">
                 <!-- Replace the existing author-selector div with this -->
                 <div id="author-selector"
@@ -134,12 +117,7 @@
                     <!-- Content will be loaded via HTMX -->
                 </div>
                 <!-- Replace the existing form with this -->
-                <form id="chat-form"
-                      hx-post="/api/chat"
-                      hx-target="#chat-messages"
-                      hx-swap="beforeend"
-                      hx-trigger="submit"
-                      class="flex gap-2">
+                <form id="chat-form" class="flex gap-2">
                     <input type="text"
                            name="message"
                            id="message-input"

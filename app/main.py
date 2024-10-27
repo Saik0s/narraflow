@@ -162,12 +162,6 @@ async def root(request: Request, session_id: Optional[str] = Cookie(None)):
     )
 
 
-@app.get("/api/messages")
-async def get_messages(request: Request, session_id: Optional[str] = Cookie(None)):
-    state = state_manager.get_state(session_id)
-    return templates.TemplateResponse(
-        "partials/messages.html", {"request": request, "messages": state.chat_history}
-    )
 
 
 @app.post("/api/chat")
@@ -235,22 +229,8 @@ async def clear_history(request: Request):
     )
 
 
-@app.post("/api/theme")
-async def set_theme(request: Request, theme: str):
-    state = state_manager.get_state()
-    state.theme = theme
-    return templates.TemplateResponse(
-        "partials/theme.html", {"request": request, "theme": theme}
-    )
 
 
-@app.get("/api/keywords")
-async def get_keywords(request: Request, session_id: Optional[str] = Cookie(None)):
-    state = state_manager.get_state(session_id)
-    keywords = extract_keywords_from_history(state.chat_history)
-    return templates.TemplateResponse(
-        "partials/keywords.html", {"request": request, "keywords": keywords}
-    )
 
 
 @app.post("/api/settings/image")
@@ -340,33 +320,6 @@ async def load_state(
 
 
 # Add this new route after your existing routes
-@app.get("/api/authors")
-async def get_authors(request: Request):
-    """Return the list of available authors for the chat interface."""
-    default_authors = [
-        {"value": "", "label": "Direct"},
-        {"value": "system", "label": "System"},
-        {"value": "narrator", "label": "Narrator"},
-    ]
-
-    # Extract unique authors from chat history
-    state = state_manager.get_state()
-    unique_authors = set()
-    for msg in state.chat_history:
-        if isinstance(msg, dict) and "messages" in msg:
-            for submsg in msg["messages"]:
-                if isinstance(submsg, dict) and "author" in submsg:
-                    author = submsg["author"]
-                    if author not in ["system", "narrator", ""]:
-                        unique_authors.add(author)
-
-    # Add custom authors to the list
-    custom_authors = [{"value": author, "label": author} for author in unique_authors]
-
-    return templates.TemplateResponse(
-        "partials/authors.html",
-        {"request": request, "authors": default_authors + custom_authors},
-    )
 
 
 @app.get("/api/images")
