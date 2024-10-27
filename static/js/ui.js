@@ -19,10 +19,12 @@ export class UI {
     }
 
     setupEventListeners() {
-        this.sendButton.addEventListener('click', (e) => {
-            e.preventDefault();
+        // Add form submit handler
+        document.getElementById('chat-form').addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form submission
             this.handleSendMessage();
         });
+        
         this.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
         this.messageInput.addEventListener('input', () => this.updateSendButtonState());
         this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
