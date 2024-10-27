@@ -304,7 +304,7 @@ class StoryApp {
         `;
         
         if (response.thoughts) {
-            const thoughts = document.createElement('p');
+            const thoughts = document.createElement('thinking');
             thoughts.className = 'thoughts';
             thoughts.textContent = response.thoughts;
             messageDiv.appendChild(thoughts);

@@ -25,6 +25,8 @@
     --emotion-color: #80cbc4;
     --object-color: #80deea;
     --plot-color: #ce93d8;
+    --thinking-color: #4a90e2;
+    --thinking-bg: rgba(74, 144, 226, 0.1);
     --error-color: #ff8a80;
     --bg-color: #121212;
     --text-color: #e0e0e0;
@@ -208,6 +210,19 @@ body {
     font-style: italic;
     color: #666;
     margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-left: 3px solid #666;
+    background-color: rgba(102, 102, 102, 0.1);
+}
+
+thinking {
+    display: block;
+    font-style: italic;
+    color: #666;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    border-left: 3px solid #4a90e2;
+    background-color: rgba(74, 144, 226, 0.1);
 }
 
 .dialog {
