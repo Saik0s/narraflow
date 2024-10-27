@@ -54,6 +54,10 @@
     @apply badge-info;
 }
 
+.keyword.selected {
+    @apply ring-2 ring-offset-2 ring-primary transform scale-105;
+}
+
 /* Loading states */
 .loading-message {
     @apply flex items-center gap-2 text-base-content/70;

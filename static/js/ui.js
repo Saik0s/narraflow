@@ -81,16 +81,19 @@ export class UI {
   async handleSendMessage() {
     const messageInput = this.elements.messageInput;
     const content = messageInput?.value.trim();
-
-    // Use the stored selectedAuthor instead of getting it from DOM
     const author = appState.selectedAuthor;
 
-    if (!content || appState.isProcessing) return;
+    if (!this.isMessageValid() || appState.isProcessing) return;
 
     try {
       this.setLoadingState(true);
 
-      const response = await sendMessage(content, author, appState.chatHistory, appState.selectedKeywords);
+      const response = await sendMessage(
+        content, 
+        author, 
+        appState.chatHistory,
+        appState.selectedKeywords
+      );
 
       if (response?.llm_response) {
         // Update state
@@ -224,10 +227,12 @@ export class UI {
 
     appState.keywords.forEach(keyword => {
       const span = document.createElement('span');
-      span.className = `badge badge-${keyword.category}`;
+      span.className = `keyword badge badge-${keyword.category}`;
+      if (appState.selectedKeywords.includes(keyword.text)) {
+        span.classList.add('selected');
+      }
       span.textContent = keyword.text;
-      span.classList.toggle('selected', appState.selectedKeywords.includes(keyword.text));
-      span.addEventListener('click', (e) => this.handleKeywordClick(keyword, e));
+      span.addEventListener('click', () => this.handleKeywordClick(keyword));
       this.elements.keywords.appendChild(span);
     });
   }
@@ -527,18 +532,17 @@ export class UI {
     });
   }
 
-  handleKeywordClick(keyword, event) {
-    const keywordElement = event.target;
+  handleKeywordClick(keyword) {
     const isSelected = appState.selectedKeywords.includes(keyword.text);
-
+    
     if (isSelected) {
       appState.selectedKeywords = appState.selectedKeywords.filter(k => k !== keyword.text);
-      keywordElement.classList.remove('selected');
     } else {
       appState.selectedKeywords.push(keyword.text);
-      keywordElement.classList.add('selected');
     }
-
+    
+    appState.saveState();
+    this.renderKeywords();
     this.updateSendButtonState();
   }
 
