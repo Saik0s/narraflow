@@ -6,9 +6,10 @@ description = "A web application that enables interactive storytelling with real
 [tool.poetry]
 name = "narraflow"
 version = "0.1.0"
-description = ""
+description = "A web application that enables interactive storytelling with real-time AI-generated illustrations, featuring a chat interface and dynamic keyword suggestions."
 authors = ["Igor Tarasenko <tarasenko.igor.v@gmail.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
