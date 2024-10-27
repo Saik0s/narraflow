@@ -142,7 +142,7 @@
         <div id="author-selector" class="join w-full mb-2">
           <!-- Content will be loaded via JavaScript -->
         </div>
-        <form id="chat-form" class="flex gap-2" @submit.prevent="handleSendMessage">
+        <form id="chat-form" class="flex gap-2" @submit.prevent="$store.app.handleSendMessage()">
           <input type="text" x-model="$store.app.currentInput" placeholder="Type your message..." class="input input-bordered flex-1" @keydown.enter.prevent="$store.app.handleSendMessage()">
           <button type="submit" class="btn btn-primary" :disabled="!$store.app.isMessageValid() || $store.app.isProcessing" x-text="$store.app.isProcessing ? 'Processing...' : 'Send'"></button>
         </form>

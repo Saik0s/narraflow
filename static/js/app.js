@@ -4,29 +4,24 @@ import { sendMessage, generateImage } from './api.js';
 window.sendMessage = sendMessage;
 window.generateImage = generateImage;
 
-// Wait for Alpine to be ready
-document.addEventListener('alpine:init', () => {
-  console.log('Alpine initialized');
-  
-  // Initialize Alpine store
-  Alpine.store('app', {
-    ...window.alpineStore,
-    chatHistory: [],
-    imageHistory: [],
-    keywords: [],
-    selectedKeywords: [],
-    commandHistory: [],
-    historyIndex: -1,
-    isProcessing: false,
-    lastImageGeneration: 0,
-    currentlyEditingMessageIndex: null,
-    selectedAuthor: '',
-    currentInput: '',
-    imageSettings: {
-      enabled: true,
-      mode: 'after_chat',
-      interval_seconds: 30
-    },
+Alpine.store('app', {
+  ...window.alpineStore,
+  chatHistory: [],
+  imageHistory: [],
+  keywords: [],
+  selectedKeywords: [],
+  commandHistory: [],
+  historyIndex: -1,
+  isProcessing: false,
+  lastImageGeneration: 0,
+  currentlyEditingMessageIndex: null,
+  selectedAuthor: '',
+  currentInput: '',
+  imageSettings: {
+    enabled: true,
+    mode: 'after_chat',
+    interval_seconds: 30
+  },
 
     init() {
       this.loadFromStorage();
