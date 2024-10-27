@@ -16,7 +16,7 @@ document.addEventListener('alpine:init', () => {
     isProcessing: false,
     lastImageGeneration: 0,
     currentlyEditingMessageIndex: null,
-    selectedAuthor: '',
+    selectedAuthor: 'narrator',
     currentInput: '',
     imageSettings: {
       enabled: true,
@@ -30,7 +30,7 @@ document.addEventListener('alpine:init', () => {
       this.keywords = [];
       this.selectedKeywords = [];
       this.currentInput = '';
-      this.selectedAuthor = '';
+      this.selectedAuthor = 'narrator';
       this.saveState();
     },
 
@@ -67,7 +67,6 @@ document.addEventListener('alpine:init', () => {
 
     updateAuthorSelector() {
       const authorSelector = document.getElementById('author-selector');
-      if (!authorSelector) return;
 
       const characters = new Set();
       this.chatHistory.forEach(msg => {
@@ -117,8 +116,6 @@ document.addEventListener('alpine:init', () => {
     },
 
     init() {
-      // ... existing initialization code ...
-
       // Image Generation Settings
       const imageGenEnabledCheckbox = document.getElementById('image-gen-enabled');
       const imageGenModeSelect = document.getElementById('image-gen-mode');
@@ -180,6 +177,9 @@ document.addEventListener('alpine:init', () => {
 
       this.loadFromStorage();
       this.applyTheme(this.theme);
+
+      this.setupAuthorSelector();
+      this.renderKeywords();
     },
 
     loadFromStorage() {
@@ -188,6 +188,7 @@ document.addEventListener('alpine:init', () => {
         if (savedState) {
           const parsed = JSON.parse(savedState);
           Object.assign(this, parsed);
+          console.log('Loaded state:', parsed);
         }
       } catch (error) {
         console.error('Failed to load state:', error);
@@ -196,6 +197,7 @@ document.addEventListener('alpine:init', () => {
 
     saveState() {
       try {
+        console.log('Saving state:', this);
         localStorage.setItem('appState', JSON.stringify({
           chatHistory: this.chatHistory,
           imageHistory: this.imageHistory,
@@ -220,8 +222,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     async handleSendMessage() {
-      const content = this.currentInput.trim();
-      const author = this.selectedAuthor || 'User'; // Default to 'User' if none selected
+      const author = this.selectedAuthor || 'narrator';
 
       if (!this.isMessageValid() || this.isProcessing) return;
 
