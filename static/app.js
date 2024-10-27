@@ -272,10 +272,9 @@ class StoryApp {
 
     async sendMessage() {
         const message = this.messageInput.value.trim();
-        const hasPrefix = /^[@>/*]/.test(message);
         const hasKeywords = this.selectedKeywords.size > 0;
         
-        if ((!hasPrefix && !hasKeywords) || this.isProcessing) return;
+        if (!message || this.isProcessing) return;
 
         this.commandHistory.unshift(message);
         this.historyIndex = -1;
@@ -545,9 +544,8 @@ class StoryApp {
 
     isMessageValid() {
         const message = this.messageInput.value.trim();
-        const hasPrefix = /^[@>/*]/.test(message);
         const hasKeywords = this.selectedKeywords.size > 0;
-        return message && (hasPrefix || hasKeywords);
+        return message || hasKeywords;
     }
 
     updateSendButtonState() {
