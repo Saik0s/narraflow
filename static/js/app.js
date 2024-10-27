@@ -11,6 +11,7 @@ document.addEventListener('alpine:init', () => {
     imageHistory: [],
     keywords: [],
     selectedKeywords: [],
+    audioCache: new Map(),
     commandHistory: [],
     historyIndex: -1,
     isProcessing: false,
@@ -521,6 +522,55 @@ document.addEventListener('alpine:init', () => {
       const sendButton = document.getElementById('send-button');
       if (sendButton) {
         sendButton.disabled = !this.isMessageValid() || this.isProcessing;
+      }
+    },
+
+    async playMessageAudio(text) {
+      try {
+        // Check if already loading
+        if (this.audioCache.get(text) === 'loading') {
+          return;
+        }
+        
+        // Check cache first
+        if (this.audioCache.has(text)) {
+          const cachedUrl = this.audioCache.get(text);
+          if (cachedUrl !== 'loading') {
+            const audio = new Audio(cachedUrl);
+            await audio.play();
+            return;
+          }
+        }
+
+        // Set loading state
+        this.audioCache.set(text, 'loading');
+
+        // Generate new audio
+        const response = await fetch('/api/audio/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate audio');
+        }
+
+        const data = await response.json();
+        
+        // Cache the URL
+        this.audioCache.set(text, data.url);
+        
+        // Play the audio
+        const audio = new Audio(data.url);
+        await audio.play();
+      } catch (error) {
+        console.error('Error playing audio:', error);
+        this.showError('Failed to play audio');
+        // Clear loading state on error
+        this.audioCache.delete(text);
       }
     },
   });
