@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from app.logging_config import setup_logging
@@ -16,10 +20,8 @@ from app.logging_config import setup_logging
 import json
 from app.models import AudioGenerationRequest, AudioResponse
 from app.audio_gen import generate_audio
-from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
 
 logger = setup_logging()
 
