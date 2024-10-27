@@ -28,14 +28,11 @@ document.addEventListener('alpine:init', () => {
       mode: 'after_chat',
       interval_seconds: 10
     },
-    imageObserver: null,
-
     init() {
       this.loadFromStorage();
       this.applyTheme(this.theme);
       this.setupAuthorSelector();
       this.renderKeywords();
-      this.initImageObserver();
 
       // Start periodic generation if enabled
       if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
@@ -405,35 +402,27 @@ document.addEventListener('alpine:init', () => {
         sendButton.disabled = !this.isMessageValid() || this.isProcessing;
       }
     },
-
-    initImageObserver() {
-      this.imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const img = entry.target;
-            if (img.dataset.src) {
-              img.src = img.dataset.src;
-              img.classList.remove('lazy');
-              this.imageObserver.unobserve(img);
-            }
-          }
-        });
-      }, {
-        root: document.getElementById('images-container'),
-        rootMargin: '50px',
-        threshold: 0.1
-      });
-    },
-
-    lazyLoadImages() {
-      if (!this.imageObserver) {
-        this.initImageObserver();
-      }
-
-      const lazyImages = document.querySelectorAll('img.lazy');
-      lazyImages.forEach(img => {
-        this.imageObserver.observe(img);
-      });
-    },
   });
+
+  // Add this to your Alpine.init listener, after the app store definition
+  Alpine.data('imageCarousel', () => ({
+    initLazyLoad() {
+      // Initial setup if needed
+    },
+
+    loadImage(imgElement, imageUrl) {
+      // Create a new image object to preload
+      const img = new Image();
+
+      img.onload = () => {
+        // Once loaded, update the src and fade in
+        imgElement.src = imageUrl;
+        imgElement.classList.add('opacity-100');
+      };
+
+      // Start loading the image
+      img.src = imageUrl;
+    }
+  }));
+
 });

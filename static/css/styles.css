@@ -173,3 +173,13 @@ img:not(.lazy) {
   height: auto;
   object-fit: contain;
 }
+
+/* Add these styles for smooth image loading transitions */
+.carousel-item img {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.carousel-item img.opacity-100 {
+  opacity: 1;
+}
