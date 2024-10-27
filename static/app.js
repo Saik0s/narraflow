@@ -62,44 +62,65 @@ class StoryApp {
 
     loadChatHistory() {
         const saved = localStorage.getItem('chatHistory');
-        const history = saved ? JSON.parse(saved) : [];
+        let history = [];
         
-        // Restore chat messages from history
-        history.forEach(msg => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-            messageDiv.dataset.id = msg.id;
+        try {
+            history = saved ? JSON.parse(saved) : [];
             
-            const controls = document.createElement('div');
-            controls.className = 'edit-controls';
-            controls.innerHTML = `
-                <button onclick="app.editMessage('${msg.id}')">Edit</button>
-                <button onclick="app.deleteMessage('${msg.id}')">Delete</button>
-            `;
-            
-            if (msg.thoughts) {
-                const thoughts = document.createElement('thinking');
-                thoughts.className = 'thoughts';
-                thoughts.textContent = msg.thoughts;
-                messageDiv.appendChild(thoughts);
-            }
-            
-            msg.dialog.forEach(entry => {
-                const text = document.createElement('p');
-                text.className = `dialog ${entry.speaker.toLowerCase()}`;
-                text.textContent = `${entry.speaker}: ${entry.text}`;
-                messageDiv.appendChild(text);
+            // Restore chat messages from history
+            history.forEach(msg => {
+                if (!msg || !msg.id) return; // Skip invalid messages
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.dataset.id = msg.id;
+                
+                const controls = document.createElement('div');
+                controls.className = 'edit-controls';
+                controls.innerHTML = `
+                    <button onclick="app.editMessage('${msg.id}')">Edit</button>
+                    <button onclick="app.deleteMessage('${msg.id}')">Delete</button>
+                `;
+                
+                if (msg.thoughts) {
+                    const thoughts = document.createElement('thinking');
+                    thoughts.className = 'thoughts';
+                    thoughts.textContent = msg.thoughts;
+                    messageDiv.appendChild(thoughts);
+                }
+                
+                if (Array.isArray(msg.dialog)) {
+                    msg.dialog.forEach(entry => {
+                        if (!entry || !entry.speaker) return; // Skip invalid dialog entries
+                        const text = document.createElement('p');
+                        text.className = `dialog ${entry.speaker.toLowerCase()}`;
+                        text.textContent = `${entry.speaker}: ${entry.text}`;
+                        messageDiv.appendChild(text);
+                    });
+                }
+                
+                this.chatMessages.appendChild(messageDiv);
+                messageDiv.appendChild(controls);
             });
-            
-            this.chatMessages.appendChild(messageDiv);
-            messageDiv.appendChild(controls);
-        });
+        } catch (error) {
+            console.error('Failed to load chat history:', error);
+            history = [];
+        }
         
         return history;
     }
 
     saveChatHistory() {
-        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+        try {
+            // Filter out invalid messages before saving
+            const validHistory = this.chatHistory.filter(msg => 
+                msg && msg.id && 
+                (msg.thoughts || (Array.isArray(msg.dialog) && msg.dialog.length > 0))
+            );
+            localStorage.setItem('chatHistory', JSON.stringify(validHistory));
+        } catch (error) {
+            console.error('Failed to save chat history:', error);
+        }
     }
 
     clearHistory() {
