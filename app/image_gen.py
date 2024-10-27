@@ -71,10 +71,11 @@ async def generate_image(prompt: str) -> ImageResponse:
         if not result or "images" not in result:
             raise ValueError("Invalid response from Fal.ai API")
 
-        image_url = result["images"][0]["url"]
-        logger.info("Successfully generated image")
+        # Extract all image URLs from the result
+        image_urls = [img["url"] for img in result["images"]]
+        logger.info(f"Successfully generated {len(image_urls)} images")
 
-        return ImageResponse(image_url=image_url)
+        return ImageResponse(urls=image_urls, prompt=prompt)
 
     except Exception as e:
         error_msg = str(e)

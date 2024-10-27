@@ -67,4 +67,5 @@ class ImageGenerationRequest(BaseModel):
 
 
 class ImageResponse(BaseModel):
-    image_url: str
+    urls: list[str] = Field(description="List of generated image URLs")
+    prompt: str = Field(description="The prompt used to generate the images")
