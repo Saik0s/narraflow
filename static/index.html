@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body data-theme="light">
-    <div class="container mx-auto p-4 min-h-screen">
+<body data-theme="light" class="min-h-screen bg-base-100">
+    <div class="container mx-auto p-4">
         <div class="navbar bg-base-200 rounded-box mb-4">
             <div class="flex-1">
                 <button id="clear-history" class="btn btn-ghost">Clear History</button>
@@ -21,7 +21,7 @@
                 </label>
             </div>
         </div>
-        <div class="image-area">
+        <div class="card bg-base-200 shadow-xl">
             <img id="current-image" src="" alt="Story Image">
             <div class="image-reactions">
                 <button class="reaction" data-reaction="like">👍</button>
@@ -45,15 +45,21 @@
             </div>
         </div>
         
-        <div class="chat-interface">
-            <div id="chat-messages"></div>
-        </div>
-        
-        <div class="bottom-panel">
-            <div class="keywords-panel" id="keywords"></div>
-            <div class="input-area">
-                <input type="text" id="message-input" placeholder="Type your message...">
-                <button id="send-button">Send</button>
+        <div class="flex flex-col gap-4">
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body">
+                    <div id="chat-messages" class="min-h-[400px] overflow-y-auto"></div>
+                </div>
+            </div>
+            
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body">
+                    <div id="keywords" class="flex flex-wrap gap-2 mb-4"></div>
+                    <div class="join w-full">
+                        <input type="text" id="message-input" placeholder="Type your message..." class="input input-bordered join-item flex-1">
+                        <button id="send-button" class="btn btn-primary join-item">Send</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -101,26 +101,9 @@ body {
 /* Updated layout for screens wider than 768px */
 @media (min-width: 769px) {
     .container {
+        display: grid;
         grid-template-columns: 400px 1fr;
-        grid-template-rows: 1fr auto;
         gap: 1rem;
-    }
-
-    .image-area {
-        grid-column: 1;
-        grid-row: 1;
-        position: sticky;
-        top: 1rem;
-    }
-
-    .chat-interface {
-        grid-column: 2;
-        grid-row: 1;
-    }
-
-    .bottom-panel {
-        grid-column: 1 / -1;
-        grid-row: 2;
     }
 }
 
