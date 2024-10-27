@@ -46,6 +46,7 @@ export class AppState {
   setState(newState) {
     if (!newState) return;
     Object.assign(this, newState);
+    this.isProcessing = false;
     this.saveState();
   }
 

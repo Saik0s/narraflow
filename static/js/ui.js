@@ -8,12 +8,12 @@ export class UI {
 
   init() {
     this.elements = this.initializeElements();
-    
+
     // Set initial input value from state
     if (this.elements.messageInput) {
       this.elements.messageInput.value = appState.currentInput || '';
     }
-    
+
     this.setupEventListeners();
     this.setupImageControls();
     this.setupAuthorSelector();
@@ -99,8 +99,8 @@ export class UI {
       this.setLoadingState(true);
 
       const response = await sendMessage(
-        appState.currentInput, 
-        author, 
+        appState.currentInput,
+        author,
         appState.chatHistory,
         appState.selectedKeywords
       );
@@ -352,29 +352,6 @@ export class UI {
     }
   }
 
-  updateMessageDisplay(index, newText) {
-    const messageDiv = document.querySelector(`[data-id="${index}"]`);
-    if (!messageDiv) return;
-
-    const contentDiv = messageDiv.querySelector('.message-content');
-    contentDiv.innerHTML = `<p class="message-text">${newText}</p>`;
-  }
-
-  handleInputKeydown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (this.isMessageValid()) {
-        this.handleSendMessage();
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      this.navigateHistory('up');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      this.navigateHistory('down');
-    }
-  }
-
   navigateHistory(direction) {
     if (direction === 'up' && appState.historyIndex < appState.commandHistory.length - 1) {
       appState.historyIndex++;
@@ -568,16 +545,15 @@ export class UI {
 
   handleKeywordClick(keyword) {
     const isSelected = appState.selectedKeywords.includes(keyword.text);
-    
+
     if (isSelected) {
       appState.selectedKeywords = appState.selectedKeywords.filter(k => k !== keyword.text);
     } else {
       appState.selectedKeywords.push(keyword.text);
     }
-    
+
     appState.saveState();
     this.renderKeywords();
-    this.updateSendButtonState();
     this.updateSendButtonState();
   }
 
@@ -618,9 +594,7 @@ export class UI {
   }
 
   updateSendButtonState() {
-    if (this.elements.sendButton) {
-      this.elements.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
-    }
+    this.elements.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
   }
 
   handleClearHistory() {
