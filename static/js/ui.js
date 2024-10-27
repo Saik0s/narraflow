@@ -24,14 +24,33 @@ export class UI {
     }
 
     setupEventListeners() {
-        // Form submission
-        this.elements.form.addEventListener('submit', async (e) => {
+        // Remove form submission event and replace with direct button click
+        this.elements.form.onsubmit = (e) => e.preventDefault(); // Prevent any form submission
+        
+        // Use direct button click instead
+        this.elements.sendButton.addEventListener('click', async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             await this.handleSendMessage();
         });
 
         // Input handling
-        this.elements.messageInput.addEventListener('keydown', this.handleInputKeydown.bind(this));
+        this.elements.messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.isMessageValid()) {
+                    this.handleSendMessage();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateHistory('up');
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.navigateHistory('down');
+            }
+        });
+        
         this.elements.messageInput.addEventListener('input', () => this.updateSendButtonState());
 
         // Theme handling
