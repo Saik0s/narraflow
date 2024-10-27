@@ -31,22 +31,28 @@
                 <!-- Images Column -->
                 <div class="p-4">
                     <h2 class="card-title mb-4">Story Visualization</h2>
-                    <div class="image-controls mb-4">
-                        <label class="toggle">
-                            <input type="checkbox" id="image-gen-enabled" checked>
-                            <span class="toggle-label">Image Generation</span>
-                        </label>
+                    <div id="images-container" class="overflow-y-auto max-h-[600px] space-y-4">
+                        <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
+                    </div>
+                    <div class="image-controls mt-4 card bg-base-200 p-4">
+                        <div class="form-control">
+                            <label class="label cursor-pointer justify-start gap-4">
+                                <input type="checkbox" id="image-gen-enabled" checked class="checkbox checkbox-primary" />
+                                <span class="label-text">Enable Image Generation</span>
+                            </label>
+                        </div>
                         <select id="image-gen-mode" class="select select-bordered w-full mt-2">
                             <option value="after_chat">After Each Chat</option>
                             <option value="periodic">Periodic</option>
                             <option value="manual">Manual Only</option>
                         </select>
-                        <div id="interval-setting" style="display: none;" class="mt-2">
-                            <input type="number" id="interval-seconds" min="5" value="30" class="input input-bordered w-20">
-                            <span>seconds</span>
+                        <div id="interval-setting" style="display: none;" class="form-control mt-2">
+                            <label class="input-group">
+                                <input type="number" id="interval-seconds" min="5" value="30" class="input input-bordered w-20" />
+                                <span>seconds</span>
+                            </label>
                         </div>
                     </div>
-                    <div id="images-container" class="overflow-y-auto max-h-[600px] space-y-4">
                         <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
                     </div>
                 </div>
