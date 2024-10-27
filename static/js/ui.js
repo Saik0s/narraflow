@@ -226,14 +226,36 @@ export class UI {
     this.elements.keywords.innerHTML = '';
 
     appState.keywords.forEach(keyword => {
-      const span = document.createElement('span');
-      span.className = `keyword badge badge-${keyword.category}`;
-      if (appState.selectedKeywords.includes(keyword.text)) {
-        span.classList.add('selected');
-      }
-      span.textContent = keyword.text;
-      span.addEventListener('click', () => this.handleKeywordClick(keyword));
-      this.elements.keywords.appendChild(span);
+        // Create wrapper div for the form control
+        const wrapper = document.createElement('div');
+        wrapper.className = 'form-control';
+
+        // Create label container
+        const label = document.createElement('label');
+        label.className = 'label cursor-pointer gap-2 bg-base-200 rounded-full px-4 py-2 hover:bg-base-300 transition-colors';
+
+        // Create keyword text span
+        const span = document.createElement('span');
+        span.className = `label-text text-${keyword.category}`;
+        span.textContent = keyword.text;
+
+        // Create checkbox input
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'checkbox checkbox-sm checkbox-primary';
+        checkbox.checked = appState.selectedKeywords.includes(keyword.text);
+
+        // Add event listener to checkbox
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation(); // Prevent label click from triggering twice
+            this.handleKeywordClick(keyword);
+        });
+
+        // Assemble the elements
+        label.appendChild(span);
+        label.appendChild(checkbox);
+        wrapper.appendChild(label);
+        this.elements.keywords.appendChild(wrapper);
     });
   }
 

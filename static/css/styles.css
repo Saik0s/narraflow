@@ -34,28 +34,48 @@
 }
 
 /* Keywords */
-.keyword {
-    @apply badge gap-2 cursor-pointer transition-all duration-200;
+#keywords {
+    @apply flex flex-wrap gap-2;
 }
 
-.keyword[data-category="action"] {
-    @apply badge-primary;
+#keywords .form-control {
+    @apply m-0;
 }
 
-.keyword[data-category="emotion"] {
-    @apply badge-secondary;
+#keywords .label {
+    @apply min-h-0 p-0;
 }
 
-.keyword[data-category="object"] {
-    @apply badge-accent;
+/* Category-specific colors */
+.text-action {
+    @apply text-primary;
 }
 
-.keyword[data-category="plot"] {
-    @apply badge-info;
+.text-emotion {
+    @apply text-secondary;
 }
 
-.keyword.selected {
-    @apply ring-2 ring-offset-2 ring-primary transform scale-105;
+.text-object {
+    @apply text-accent;
+}
+
+.text-plot {
+    @apply text-info;
+}
+
+/* Selected state */
+#keywords .label.selected {
+    @apply bg-base-300;
+}
+
+/* Hover effects */
+#keywords .label:hover {
+    @apply bg-base-300;
+}
+
+/* Checkbox sizing and spacing */
+#keywords .checkbox {
+    @apply checkbox-sm ml-2;
 }
 
 /* Loading states */
