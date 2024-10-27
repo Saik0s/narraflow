@@ -17,7 +17,7 @@
 
 <body data-theme="dark" 
       class="min-h-screen bg-base-100" 
-      x-init="$nextTick(() => $store.app.init())">
+      x-init="$nextTick(() => window.alpineStore.init())">
   <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
     <div class="navbar bg-base-200 rounded-box shadow-lg">
       <div class="flex-1">
@@ -59,8 +59,9 @@
         <label class="swap swap-rotate">
           <input type="checkbox" 
                  class="theme-controller" 
+                 x-model="$store.app.theme"
                  :checked="$store.app.theme === 'dark'"
-                 @change="$store.app.setTheme($event.target.checked ? 'dark' : 'light')" />
+                 @change="$store.app.applyTheme($event.target.checked ? 'dark' : 'light')" />
 
           <!-- sun icon -->
           <svg class="swap-on fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
