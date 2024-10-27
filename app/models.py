@@ -60,6 +60,7 @@ class NewChatMessage(BaseModel):
 
 class ImageGenerationRequest(BaseModel):
     history: List[Message]
+    imageHistory: List[dict] = Field(default_factory=list)
     systemPrompt: Optional[str] = Field(default="")
 
     class Config:

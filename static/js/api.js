@@ -28,7 +28,7 @@ export async function sendMessage(content, author, history, selectedKeywords) {
   }
 }
 
-export async function generateImage(history) {
+export async function generateImage(history, imageHistory) {
   try {
     const imagePrompt = localStorage.getItem('imagePrompt') || '';
     console.log('Requesting image generation');
@@ -39,6 +39,7 @@ export async function generateImage(history) {
       },
       body: JSON.stringify({
         history: history,
+        imageHistory: imageHistory,
         systemPrompt: imagePrompt
       })
     });

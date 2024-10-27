@@ -29,15 +29,30 @@ client = instructor.from_anthropic(AsyncAnthropic())
 
 
 async def generate_prompt(imageGen: ImageGenerationRequest) -> str:
-    """Generate an image prompt from chat history"""
+    """Generate an image prompt from chat history and image history"""
     try:
         # Format messages for Claude
         messages = history_to_messages(imageGen.history)
+        
+        # Add context about previous images if available
+        image_context = ""
+        if imageGen.imageHistory:
+            recent_images = imageGen.imageHistory[-3:]  # Get last 3 images
+            image_context = "\nRecent image prompts:\n" + "\n".join(
+                f"- {img['prompt']}" for img in recent_images
+            )
 
         system_prompt = (
             imageGen.systemPrompt
-            or "You are an expert at creating vivid image generation prompts. Analyze the conversation and create a prompt that captures the latest significant story development. Focus on visual elements and maintain a consistent style."
+            or "You are an expert at creating vivid image generation prompts. "
+            "Analyze the conversation and create a prompt that captures the latest "
+            "significant story development. Focus on visual elements and maintain "
+            "a consistent style with previous images if available."
         )
+
+        # Add image context to system prompt if available
+        if image_context:
+            system_prompt += image_context
 
         prompt = await client.messages.create(
             model="claude-3-5-sonnet-20241022",

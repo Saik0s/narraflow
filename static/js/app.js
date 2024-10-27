@@ -319,7 +319,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       try {
-        const response = await generateImage(this.chatHistory);
+        const response = await generateImage(this.chatHistory, this.imageHistory);
         if (response?.urls && response.urls.length > 0) {
           // Store each image URL along with its prompt
           response.urls.forEach(url => {
