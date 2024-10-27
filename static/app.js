@@ -62,7 +62,40 @@ class StoryApp {
 
     loadChatHistory() {
         const saved = localStorage.getItem('chatHistory');
-        return saved ? JSON.parse(saved) : [];
+        const history = saved ? JSON.parse(saved) : [];
+        
+        // Restore chat messages from history
+        history.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.dataset.id = msg.id;
+            
+            const controls = document.createElement('div');
+            controls.className = 'edit-controls';
+            controls.innerHTML = `
+                <button onclick="app.editMessage('${msg.id}')">Edit</button>
+                <button onclick="app.deleteMessage('${msg.id}')">Delete</button>
+            `;
+            
+            if (msg.thoughts) {
+                const thoughts = document.createElement('thinking');
+                thoughts.className = 'thoughts';
+                thoughts.textContent = msg.thoughts;
+                messageDiv.appendChild(thoughts);
+            }
+            
+            msg.dialog.forEach(entry => {
+                const text = document.createElement('p');
+                text.className = `dialog ${entry.speaker.toLowerCase()}`;
+                text.textContent = `${entry.speaker}: ${entry.text}`;
+                messageDiv.appendChild(text);
+            });
+            
+            this.chatMessages.appendChild(messageDiv);
+            messageDiv.appendChild(controls);
+        });
+        
+        return history;
     }
 
     saveChatHistory() {
@@ -302,6 +335,17 @@ class StoryApp {
             <button onclick="app.editMessage('${messageDiv.dataset.id}')">Edit</button>
             <button onclick="app.deleteMessage('${messageDiv.dataset.id}')">Delete</button>
         `;
+        
+        // Create message object for history
+        const messageObj = {
+            id: messageDiv.dataset.id,
+            thoughts: response.thoughts || '',
+            dialog: response.dialog || [],
+            timestamp: Date.now()
+        };
+        
+        // Add to chat history
+        this.chatHistory.push(messageObj);
         
         if (response.thoughts) {
             const thoughts = document.createElement('thinking');
