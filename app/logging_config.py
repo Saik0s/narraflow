@@ -1,8 +1,7 @@
+import logging
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.traceback import install
-import logging
-import sys
 
 # Install rich traceback handler
 install(show_locals=True)
@@ -28,5 +27,5 @@ def setup_logging():
 
     # Get logger
     logger = logging.getLogger("rich")
-    
+
     return logger

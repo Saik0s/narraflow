@@ -2,25 +2,18 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from app.logging_config import setup_logging
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from app.models import (
     ComfyWorkflowRequest,
     ImageResponse,
     LLMMessage,
     NewChatMessage,
     ImageGenerationRequest,
-    Message,
 )
 from app.llm import process_chat
 from app.image_gen import generate_image, generate_image_comfy, generate_prompt
 from app.logging_config import setup_logging
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
 import json
-import os
-import hashlib
-from pathlib import Path
-from starlette.middleware.base import BaseHTTPMiddleware
 from app.models import AudioGenerationRequest, AudioResponse
 from app.audio_gen import generate_audio
 

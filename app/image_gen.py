@@ -79,12 +79,12 @@ class ImagePromptDetails(BaseModel):
     def to_prompt(self) -> ImagePrompt:
         """Convert the structured prompt to a detailed, cohesive string"""
         positive_prompt = (
-            f"{self.style} image featuring {self.characters}. "
+            f"{self.style} featuring {self.characters}. "
             f"{self.clothing_and_accessories}. "
             f"{self.expressions_and_poses}. "
-            f"Scene: {self.scene}. "
-            f"Lighting: {self.lighting}. "
-            f"Camera: {self.camera}. "
+            f"{self.scene}. "
+            f"{self.lighting}. "
+            f"{self.camera}. "
             f"{self.additional_details}."
         )
         return ImagePrompt(positive=positive_prompt, negative=self.negative_prompt)
