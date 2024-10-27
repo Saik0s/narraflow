@@ -48,15 +48,21 @@ class ImageData(BaseModel):
     prompt: str
 
 
+class ClientState(BaseModel):
+    chatHistory: List[Dict[str, Any]]
+    selectedKeywords: List[str]
+    commandHistory: List[str]
+    imageSettings: Dict[str, Any]
+    lastImageGeneration: int
+
 class ChatMessage(BaseModel):
     message: str
     author: Optional[str] = ""
-    history: Optional[List[Dict[str, Any]]] = []
-    selected_keywords: Optional[List[str]] = []
-
+    state: ClientState
 
 class ImagePrompt(BaseModel):
     prompt: str
+    state: ClientState
 
 
 class ImageResponse(BaseModel):

@@ -170,7 +170,12 @@ async def root(request: Request, session_id: Optional[str] = Cookie(None)):
 @app.post("/api/chat")
 async def chat(chat_message: ChatMessage):
     try:
+        logger.info(f"Received chat request with state: {chat_message.state}")
+        
+        # Process chat with complete state context
         response = await process_chat(chat_message)
+        
+        logger.info(f"Generated response: {response}")
         return {"llm_response": response}
     except Exception as e:
         logger.error(f"Error processing chat: {str(e)}")
@@ -200,7 +205,12 @@ async def update_image_settings(settings: ImageSettings):
 @app.post("/api/image/generate")
 async def generate_image_endpoint(prompt: ImagePrompt):
     try:
+        logger.info(f"Received image generation request with state: {prompt.state}")
+        
+        # Generate image with complete state context
         image_response = await generate_image(prompt)
+        
+        logger.info(f"Generated image response: {image_response}")
         return image_response
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")

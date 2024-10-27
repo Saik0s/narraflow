@@ -11,7 +11,7 @@
     <!-- Add this line after the other CSS links -->
     <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
 </head>
-<body data-theme="{{ initial_state.theme if initial_state else 'light' }}" class="min-h-screen bg-base-100" hx-boost="true">
+<body data-theme="{{ initial_state.theme if initial_state else 'light' }}" class="min-h-screen bg-base-100">
     <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
         <!-- Password Panel -->
         <div class="navbar bg-base-200 rounded-box shadow-lg">
@@ -28,10 +28,7 @@
                 <button id="load-state-btn" class="btn btn-secondary btn-sm">Load State</button>
             </div>
             <div class="flex-1">
-                <button hx-delete="/api/history"
-                        hx-confirm="Are you sure you want to clear the chat history?"
-                        hx-target="#chat-messages"
-                        hx-swap="innerHTML"
+                <button id="clear-history" 
                         class="btn btn-ghost">Clear History</button>
             </div>
             <div class="flex-none">

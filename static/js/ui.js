@@ -19,10 +19,9 @@ export class UI {
     }
 
     setupEventListeners() {
-        this.sendButton.addEventListener('click', () => {
-            if (this.isMessageValid()) {
-                this.handleSendMessage();
-            }
+        this.sendButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleSendMessage();
         });
         this.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
         this.messageInput.addEventListener('input', () => this.updateSendButtonState());
@@ -43,13 +42,70 @@ export class UI {
     }
 
     async handleSendMessage() {
+        if (!this.isMessageValid() || appState.isProcessing) return;
+
         const message = this.messageInput.value.trim();
         const author = document.querySelector('input[name="author"]:checked')?.value || '';
+        
+        try {
+            this.setLoadingState(true);
+            console.log('Preparing to send message with complete state');
 
-        if (message || appState.selectedKeywords.size > 0) {
-            await sendMessage(message, author);
-            this.messageInput.value = '';
-            this.updateSendButtonState();
+            // Prepare complete state object
+            const completeState = {
+                message,
+                author,
+                state: {
+                    chatHistory: appState.chatHistory,
+                    selectedKeywords: Array.from(appState.selectedKeywords),
+                    commandHistory: appState.commandHistory,
+                    imageSettings: appState.imageSettings,
+                    lastImageGeneration: appState.lastImageGeneration
+                }
+            };
+
+            console.log('Sending complete state:', completeState);
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(completeState)
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            const data = await response.json();
+            console.log('Received response:', data);
+
+            if (data.llm_response) {
+                // Handle multiple messages if present
+                this.appendMessage(data.llm_response);
+                
+                // Update keywords if present
+                if (data.llm_response.keywords) {
+                    this.updateKeywords(data.llm_response.keywords);
+                }
+
+                // Clear input and update UI state
+                this.messageInput.value = '';
+                this.updateSendButtonState();
+
+                // Handle image generation if enabled
+                if (appState.imageSettings.enabled && 
+                    appState.imageSettings.mode === 'after_chat') {
+                    await this.handleImageGeneration(completeState.state);
+                }
+            }
+
+        } catch (error) {
+            console.error('Failed to send message:', error);
+            this.appendErrorMessage(error.message || 'Failed to send message');
+        } finally {
+            this.setLoadingState(false);
         }
     }
 
@@ -391,3 +447,36 @@ export class UI {
         this.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
     }
 }
+    async handleImageGeneration(state) {
+        if (Date.now() - appState.lastImageGeneration < 5000) {
+            console.log('Skipping image generation - too soon');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/image/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: "Generate based on current context",
+                    state: state
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate image');
+            }
+
+            const data = await response.json();
+            if (data.image_url) {
+                this.updateImage(data.image_url);
+                appState.lastImageGeneration = Date.now();
+                appState.saveToStorage(); // Save state after updating image timestamp
+            }
+        } catch (error) {
+            console.error('Failed to generate image:', error);
+            this.appendErrorMessage('Failed to generate image');
+        }
+    }
