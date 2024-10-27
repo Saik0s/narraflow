@@ -19,6 +19,7 @@ class ChatMessage(BaseModel):
     message: str
     prefix: str
     history: List[dict] = []  # List of previous messages
+    selected_keywords: List[str] = []
 
 class ImagePrompt(BaseModel):
     prompt: str

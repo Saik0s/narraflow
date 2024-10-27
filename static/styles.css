@@ -298,6 +298,12 @@ body {
     border-radius: 15px;
     cursor: pointer;
     transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.keyword.selected {
+    border-color: var(--button-bg);
+    box-shadow: 0 0 4px var(--button-bg);
 }
 
 .keyword:hover {

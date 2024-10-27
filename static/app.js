@@ -4,6 +4,7 @@ class StoryApp {
         this.sendButton = document.getElementById('send-button');
         this.chatMessages = document.getElementById('chat-messages');
         this.keywords = document.getElementById('keywords');
+        this.selectedKeywords = new Set();
         this.currentImage = document.getElementById('current-image');
         this.darkModeToggle = document.getElementById('dark-mode-toggle');
         this.clearHistoryBtn = document.getElementById('clear-history');
@@ -232,7 +233,8 @@ class StoryApp {
                 body: JSON.stringify({
                     message: message,
                     prefix: prefix,
-                    history: this.chatHistory
+                    history: this.chatHistory,
+                    selected_keywords: Array.from(this.selectedKeywords)
                 })
             });
 
@@ -336,8 +338,14 @@ class StoryApp {
     }
 
     handleKeywordClick(keyword) {
-        this.messageInput.value += ` ${keyword.text}`;
-        this.messageInput.focus();
+        const keywordElement = event.target;
+        if (this.selectedKeywords.has(keyword.text)) {
+            this.selectedKeywords.delete(keyword.text);
+            keywordElement.classList.remove('selected');
+        } else {
+            this.selectedKeywords.add(keyword.text);
+            keywordElement.classList.add('selected');
+        }
     }
 
     async handleReaction(reaction) {
