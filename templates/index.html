@@ -7,7 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="{{ url_for('static', path='js/state-management.js') }}" defer></script>
+    <!-- Add type="module" to enable ES6 modules -->
+    <script type="module" src="{{ url_for('static', path='js/app.js') }}"></script>
+    <script type="module" src="{{ url_for('static', path='js/state-management.js') }}"></script>
     <!-- Add this line after the other CSS links -->
     <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
 </head>
@@ -28,7 +30,7 @@
                 <button id="load-state-btn" class="btn btn-secondary btn-sm">Load State</button>
             </div>
             <div class="flex-1">
-                <button id="clear-history" 
+                <button id="clear-history"
                         class="btn btn-ghost">Clear History</button>
             </div>
             <div class="flex-none">
@@ -114,13 +116,12 @@
                     <!-- Content will be loaded via HTMX -->
                 </div>
                 <!-- Replace the existing form with this -->
-                <form id="chat-form" class="flex gap-2" onsubmit="return false;">
+                <form id="chat-form" class="flex gap-2" novalidate data-form-type="chat">
                     <input type="text"
                            name="message"
                            id="message-input"
                            placeholder="Type your message..."
                            class="input input-bordered flex-1">
-                    <input type="hidden" name="author" id="selected-author">
                     <button type="button"
                             id="send-button"
                             class="btn btn-primary">Send</button>

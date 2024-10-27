@@ -3,6 +3,10 @@ import { sendMessage, generateImage } from './api.js';
 
 export class UI {
     constructor() {
+        this.elements = null;
+    }
+
+    init() {
         this.elements = this.initializeElements();
         this.setupEventListeners();
         this.setupImageControls();
@@ -14,20 +18,27 @@ export class UI {
             messageInput: document.getElementById('message-input'),
             sendButton: document.getElementById('send-button'),
             chatMessages: document.getElementById('chat-messages'),
-            keywords: document.getElementById('keywords-container'),
+            keywords: document.getElementById('keywords'),  // Updated from keywords-container
             imageContainer: document.getElementById('images-container'),
             darkModeToggle: document.getElementById('dark-mode-toggle'),
             clearHistoryBtn: document.getElementById('clear-history'),
             form: document.getElementById('chat-form'),
-            authorSelector: document.getElementById('author-selector')
+            authorSelector: document.getElementById('author-selector'),
+            // Add image control elements
+            imageGenEnabled: document.querySelector('input[hx-post="/api/settings/image"]'),
+            imageGenMode: document.querySelector('select[hx-post="/api/settings/image-mode"]'),
+            intervalInput: document.querySelector('input[hx-post="/api/settings/interval"]'),
+            intervalSetting: document.getElementById('interval-setting')
         };
     }
 
     setupEventListeners() {
-        // Remove form submission event and replace with direct button click
-        this.elements.form.onsubmit = (e) => e.preventDefault(); // Prevent any form submission
-        
-        // Use direct button click instead
+        // Prevent form submission and handle button click
+        this.elements.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
         this.elements.sendButton.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -50,7 +61,7 @@ export class UI {
                 this.navigateHistory('down');
             }
         });
-        
+
         this.elements.messageInput.addEventListener('input', () => this.updateSendButtonState());
 
         // Theme handling
@@ -63,28 +74,35 @@ export class UI {
     }
 
     async handleSendMessage() {
-        const message = this.elements.messageInput.value.trim();
-        const author = document.querySelector('input[name="author"]:checked')?.value || '';
+        const messageInput = this.elements.messageInput;
+        const message = messageInput?.value.trim();
+        const authorInput = document.querySelector('input[name="author"]:checked');
+        const author = authorInput ? authorInput.value : '';
 
         if (!message || appState.isProcessing) return;
 
         try {
             this.setLoadingState(true);
-            const response = await sendMessage(message, author);
+            console.log('Sending message:', { message, author }); // Debug log
+
+            const state = appState.getState(); // Get current state
+            const response = await sendMessage(message, author, state);
+
+            console.log('Response received:', response); // Debug log
 
             if (response?.llm_response) {
                 this.appendMessage(response.llm_response);
-                this.elements.messageInput.value = '';
+                messageInput.value = '';
                 this.updateSendButtonState();
 
-                if (appState.imageSettings.enabled && 
+                if (appState.imageSettings.enabled &&
                     appState.imageSettings.mode === 'after_chat') {
-                    await this.handleImageGeneration();
+                    await this.handleImageGeneration(state);
                 }
             }
         } catch (error) {
             console.error('Failed to send message:', error);
-            this.showError(error.message || 'Failed to send message');
+            this.appendErrorMessage(error.message || 'Failed to send message');
         } finally {
             this.setLoadingState(false);
         }
@@ -102,6 +120,8 @@ export class UI {
     }
 
     appendMessage(response) {
+        if (!this.elements.chatMessages) return;
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
         messageDiv.dataset.id = Date.now().toString();
@@ -131,18 +151,18 @@ export class UI {
 
         messageDiv.appendChild(contentDiv);
         messageDiv.appendChild(controls);
-        this.chatMessages.appendChild(messageDiv);
+        this.elements.chatMessages.appendChild(messageDiv);
 
         // Add event listeners for edit and delete
         const editBtn = messageDiv.querySelector('.edit-button');
         const deleteBtn = messageDiv.querySelector('.delete-button');
-        
+
         editBtn.addEventListener('click', () => this.editMessage(messageDiv.dataset.id));
         deleteBtn.addEventListener('click', () => this.deleteMessage(messageDiv.dataset.id));
 
         // Scroll to bottom
         requestAnimationFrame(() => {
-            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
         });
 
         // Update state
@@ -271,16 +291,16 @@ export class UI {
     }
 
     setupImageControls() {
-        const enabledToggle = document.getElementById('image-gen-enabled');
-        const modeSelect = document.getElementById('image-gen-mode');
-        const intervalSetting = document.getElementById('interval-setting');
-        const intervalInput = document.getElementById('interval-seconds');
+        if (!this.elements.imageGenEnabled || !this.elements.imageGenMode || !this.elements.intervalInput) {
+            console.warn('Image control elements not found');
+            return;
+        }
 
-        enabledToggle.checked = appState.imageSettings.enabled;
-        modeSelect.value = appState.imageSettings.mode;
-        intervalInput.value = appState.imageSettings.interval_seconds;
+        this.elements.imageGenEnabled.checked = appState.imageSettings.enabled;
+        this.elements.imageGenMode.value = appState.imageSettings.mode;
+        this.elements.intervalInput.value = appState.imageSettings.interval_seconds;
 
-        enabledToggle.addEventListener('change', (e) => {
+        this.elements.imageGenEnabled.addEventListener('change', (e) => {
             appState.updateImageSettings({ enabled: e.target.checked });
             if (appState.imageSettings.enabled && appState.imageSettings.mode === 'periodic') {
                 this.startImageGeneration();
@@ -289,9 +309,12 @@ export class UI {
             }
         });
 
-        modeSelect.addEventListener('change', (e) => {
+        this.elements.imageGenMode.addEventListener('change', (e) => {
             appState.updateImageSettings({ mode: e.target.value });
-            intervalSetting.style.display = e.target.value === 'periodic' ? 'flex' : 'none';
+            if (this.elements.intervalSetting) {
+                this.elements.intervalSetting.style.display =
+                    e.target.value === 'periodic' ? 'flex' : 'none';
+            }
 
             this.stopImageGeneration();
             if (appState.imageSettings.enabled && e.target.value === 'periodic') {
@@ -299,7 +322,7 @@ export class UI {
             }
         });
 
-        intervalInput.addEventListener('change', (e) => {
+        this.elements.intervalInput.addEventListener('change', (e) => {
             appState.updateImageSettings({
                 interval_seconds: Math.max(5, parseInt(e.target.value) || 30)
             });
@@ -308,14 +331,18 @@ export class UI {
             }
         });
 
-        intervalSetting.style.display = appState.imageSettings.mode === 'periodic' ? 'flex' : 'none';
+        // Set initial interval setting display
+        if (this.elements.intervalSetting) {
+            this.elements.intervalSetting.style.display =
+                appState.imageSettings.mode === 'periodic' ? 'flex' : 'none';
+        }
     }
 
     startImageGeneration() {
         this.stopImageGeneration();
         if (appState.imageSettings.mode === 'periodic') {
             this.imageGenTimer = setInterval(() => {
-                generateImage();
+                this.handleImageGeneration();
             }, appState.imageSettings.interval_seconds * 1000);
         }
     }
@@ -414,6 +441,8 @@ export class UI {
     }
 
     appendMessage(response) {
+        if (!this.elements.chatMessages) return;
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
         messageDiv.dataset.id = Date.now().toString();
@@ -421,10 +450,10 @@ export class UI {
         const controls = document.createElement('div');
         controls.className = 'edit-controls';
         controls.innerHTML = `
-            <button onclick="app.editMessage('${messageDiv.dataset.id}')">
+            <button class="btn btn-ghost btn-sm edit-button">
                 <i class="fas fa-edit"></i> Edit
             </button>
-            <button onclick="app.deleteMessage('${messageDiv.dataset.id}')">
+            <button class="btn btn-ghost btn-sm delete-button">
                 <i class="fas fa-trash"></i> Delete
             </button>
         `;
@@ -441,17 +470,23 @@ export class UI {
             contentDiv.appendChild(text);
         });
 
-        messageDiv.appendChild(controls);
         messageDiv.appendChild(contentDiv);
-        this.chatMessages.appendChild(messageDiv);
+        messageDiv.appendChild(controls);
+        this.elements.chatMessages.appendChild(messageDiv);
 
+        // Add event listeners for edit and delete
+        const editBtn = messageDiv.querySelector('.edit-button');
+        const deleteBtn = messageDiv.querySelector('.delete-button');
+
+        editBtn.addEventListener('click', () => this.editMessage(messageDiv.dataset.id));
+        deleteBtn.addEventListener('click', () => this.deleteMessage(messageDiv.dataset.id));
+
+        // Scroll to bottom
         requestAnimationFrame(() => {
-            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
         });
 
-        this.updateAuthorSelector();
-
-        // Add to state
+        // Update state
         const messageObj = {
             id: messageDiv.dataset.id,
             messages: response.messages || [],
@@ -527,35 +562,48 @@ export class UI {
     }
 
     setLoadingState(loading) {
-        appState.isProcessing = loading;
-        this.sendButton.disabled = loading;
-        this.messageInput.disabled = loading;
-        this.sendButton.innerHTML = loading ?
-            '<span class="loading">Processing...</span>' :
-            'Send';
+        if (!this.elements) return;
 
-        if (loading) {
-            const loadingMessage = document.createElement('div');
-            loadingMessage.className = 'message loading-message';
-            loadingMessage.innerHTML = '<div class="loading-spinner"></div> Processing your message...';
-            this.chatMessages.appendChild(loadingMessage);
-            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-        } else {
-            const loadingMessage = this.chatMessages.querySelector('.loading-message');
-            if (loadingMessage) {
-                loadingMessage.remove();
+        appState.isProcessing = loading;
+
+        if (this.elements.sendButton) {
+            this.elements.sendButton.disabled = loading;
+            this.elements.sendButton.innerHTML = loading ?
+                '<span class="loading">Processing...</span>' :
+                'Send';
+        }
+
+        if (this.elements.messageInput) {
+            this.elements.messageInput.disabled = loading;
+        }
+
+        if (this.elements.chatMessages) {
+            if (loading) {
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'message loading-message';
+                loadingMessage.innerHTML = '<div class="loading-spinner"></div> Processing your message...';
+                this.elements.chatMessages.appendChild(loadingMessage);
+                this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+            } else {
+                const loadingMessage = this.elements.chatMessages.querySelector('.loading-message');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
             }
         }
     }
 
     isMessageValid() {
-        const message = this.messageInput.value.trim();
+        const message = this.elements.messageInput?.value.trim();
         return message || appState.selectedKeywords.size > 0;
     }
 
     updateSendButtonState() {
-        this.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
+        if (this.elements.sendButton) {
+            this.elements.sendButton.disabled = !this.isMessageValid() || appState.isProcessing;
+        }
     }
+
     async handleImageGeneration(state) {
         if (Date.now() - appState.lastImageGeneration < 5000) {
             console.log('Skipping image generation - too soon');
@@ -588,5 +636,77 @@ export class UI {
             console.error('Failed to generate image:', error);
             this.appendErrorMessage('Failed to generate image');
         }
+    }
+
+    appendErrorMessage(error) {
+        if (!this.elements.chatMessages) return;
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message error';
+        errorDiv.textContent = error;
+        this.elements.chatMessages.appendChild(errorDiv);
+        this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+    }
+
+    handleClearHistory() {
+        if (confirm('Are you sure you want to clear the chat history?')) {
+            appState.clearState();
+            if (this.elements.chatMessages) {
+                this.elements.chatMessages.innerHTML = '';
+            }
+            if (this.elements.keywords) {
+                this.elements.keywords.innerHTML = '';
+            }
+            if (this.elements.imageContainer) {
+                this.elements.imageContainer.innerHTML = `
+                    <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
+                `;
+            }
+            this.updateSendButtonState();
+        }
+    }
+
+    updateImage(imageUrl, prompt = '') {
+        if (!this.elements.imageContainer) return;
+
+        const imageWrapper = document.createElement('div');
+        imageWrapper.className = 'card bg-base-200 shadow-xl';
+
+        const shouldScroll =
+            this.elements.imageContainer.scrollHeight - this.elements.imageContainer.scrollTop ===
+            this.elements.imageContainer.clientHeight;
+
+        const imageBody = document.createElement('div');
+        imageBody.className = 'card-body p-4';
+
+        const image = document.createElement('img');
+        image.src = imageUrl;
+        image.className = 'w-full h-auto rounded-lg';
+
+        imageBody.appendChild(image);
+        imageWrapper.appendChild(imageBody);
+        this.elements.imageContainer.insertBefore(imageWrapper, this.elements.imageContainer.firstChild);
+
+        if (shouldScroll) {
+            this.elements.imageContainer.scrollTop = this.elements.imageContainer.scrollHeight;
+        }
+
+        const imageData = {
+            type: 'image',
+            url: imageUrl,
+            prompt: prompt,
+            timestamp: Date.now(),
+            id: Date.now().toString()
+        };
+        appState.addMessage(imageData);
+    }
+
+    showError(message) {
+        console.error(message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-error';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 3000);
     }
 }

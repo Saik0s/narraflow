@@ -1,45 +1,37 @@
 import { appState } from './state.js';
 import { ui } from './app.js';
 
-export async function sendMessage(message, author) {
-    if (!message || appState.isProcessing) return;
-
-    appState.commandHistory.unshift(message);
-    appState.historyIndex = -1;
-
-    const selectedKeywordsArray = Array.from(appState.selectedKeywords);
-    appState.selectedKeywords.clear();
-    ui.keywords.innerHTML = '';
+export async function sendMessage(message, author, state) {
+    if (!message) return;
 
     try {
-        const requestBody = {
-            message: message,
-            author: author || "",
-            state: appState.getState() // Send the full state
-        };
-
+        console.log('Making API request:', { message, author, state }); // Debug log
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                message,
+                author: author || "",
+                state: state || {}
+            })
         });
 
         if (!response.ok) {
-            throw new Error(await response.text());
+            const errorText = await response.text();
+            throw new Error(errorText);
         }
 
         return await response.json();
-
     } catch (error) {
-        console.error('Failed to send message:', error);
+        console.error('API error:', error);
         throw error;
     }
 }
 
 export async function generateImage(state) {
-    if (!appState.imageSettings.enabled || 
+    if (!appState.imageSettings.enabled ||
         Date.now() - appState.lastImageGeneration < 5000) {
         console.log('Skipping image generation - too soon or disabled');
         return;
@@ -64,7 +56,7 @@ export async function generateImage(state) {
 
         const data = await response.json();
         console.log('Received image response:', data);
-        
+
         if (data.image_url) {
             ui.updateImage(data.image_url);
             appState.lastImageGeneration = Date.now();

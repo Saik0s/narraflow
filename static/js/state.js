@@ -12,18 +12,31 @@ export class AppState {
             interval_seconds: 30
         };
         this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        
-        // Initialize state from storage
-        this.loadFromStorage();
-        
-        // Set up theme listener
-        this.setupThemeListener();
     }
 
-    setupThemeListener() {
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            this.setTheme(e.matches ? 'dark' : 'light');
-        });
+    loadState() {
+        try {
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                const state = JSON.parse(saved);
+                this.setState(state);
+            }
+        } catch (error) {
+            console.error('Failed to load state:', error);
+        }
+    }
+
+    setState(newState) {
+        if (!newState) return;
+
+        this.chatHistory = newState.chatHistory || [];
+        this.selectedKeywords = new Set(newState.selectedKeywords || []);
+        this.commandHistory = newState.commandHistory || [];
+        this.imageSettings = newState.imageSettings || this.imageSettings;
+        this.lastImageGeneration = newState.lastImageGeneration || 0;
+        this.theme = newState.theme || this.theme;
+
+        this.saveState();
     }
 
     getState() {
@@ -37,31 +50,7 @@ export class AppState {
         };
     }
 
-    setState(newState) {
-        if (!newState) return;
-        
-        this.chatHistory = newState.chatHistory || [];
-        this.selectedKeywords = new Set(newState.selectedKeywords || []);
-        this.commandHistory = newState.commandHistory || [];
-        this.imageSettings = newState.imageSettings || this.imageSettings;
-        this.lastImageGeneration = newState.lastImageGeneration || 0;
-        this.theme = newState.theme || this.theme;
-        
-        this.saveToStorage();
-    }
-
-    loadFromStorage() {
-        try {
-            const saved = localStorage.getItem('appState');
-            if (saved) {
-                this.setState(JSON.parse(saved));
-            }
-        } catch (error) {
-            console.error('Failed to load state:', error);
-        }
-    }
-
-    saveToStorage() {
+    saveState() {
         try {
             localStorage.setItem('appState', JSON.stringify(this.getState()));
         } catch (error) {
@@ -70,36 +59,33 @@ export class AppState {
     }
 
     clearState() {
-        this.setState({
-            chatHistory: [],
-            selectedKeywords: [],
-            commandHistory: [],
-            imageSettings: {
-                enabled: true,
-                mode: 'after_chat',
-                interval_seconds: 30
-            },
-            lastImageGeneration: 0
-        });
+        this.chatHistory = [];
+        this.selectedKeywords.clear();
+        this.commandHistory = [];
+        this.imageSettings = {
+            enabled: true,
+            mode: 'after_chat',
+            interval_seconds: 30
+        };
+        this.lastImageGeneration = 0;
         localStorage.removeItem('appState');
     }
 
-    // Message management
     addMessage(message) {
         if (!message?.id) return;
-        
+
         this.chatHistory = [
             ...this.chatHistory.filter(msg => msg.id !== message.id),
             message
         ];
-        this.saveToStorage();
+        this.saveState();
     }
 
     updateMessage(id, content) {
         const message = this.chatHistory.find(msg => msg.id === id);
         if (message?.messages?.[0]) {
             message.messages[0].content = content;
-            this.saveToStorage();
+            this.saveState();
         }
     }
 
@@ -107,41 +93,17 @@ export class AppState {
         const initialLength = this.chatHistory.length;
         this.chatHistory = this.chatHistory.filter(msg => msg.id !== id);
         if (this.chatHistory.length !== initialLength) {
-            this.saveToStorage();
+            this.saveState();
         }
-    }
-
-    // Keyword management
-    toggleKeyword(keyword) {
-        if (!keyword) return;
-        
-        if (this.selectedKeywords.has(keyword)) {
-            this.selectedKeywords.delete(keyword);
-        } else {
-            this.selectedKeywords.add(keyword);
-        }
-        this.saveToStorage();
-    }
-
-    // Settings management
-    updateImageSettings(settings) {
-        if (!settings) return;
-        
-        this.imageSettings = {
-            ...this.imageSettings,
-            ...settings,
-            interval_seconds: settings.interval_seconds 
-                ? Math.max(5, parseInt(settings.interval_seconds))
-                : this.imageSettings.interval_seconds
-        };
-        this.saveToStorage();
     }
 
     setTheme(theme) {
         this.theme = theme;
         document.documentElement.setAttribute('data-theme', theme);
-        this.saveToStorage();
+        document.body.setAttribute('data-theme', theme);
+        this.saveState();
     }
 }
 
+// Create and export a single instance
 export const appState = new AppState();
