@@ -17,10 +17,15 @@
   <title>Interactive Story</title>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.13/dist/full.min.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.39.0/+esm';
+
+    window.editor = monaco.editor.create(document.querySelector('.monaco'));
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/vscode-codicons@0.0.17/dist/codicon.min.css" rel="stylesheet">
   <!-- Load app.js first -->
   <script type="module" src="{{ url_for('static', path='js/app.js') }}"></script>
   <!-- Then load Alpine.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Add this line after the other CSS links -->
@@ -122,11 +127,11 @@
                     <div class="flex gap-1">
                       <div class="flex items-center gap-2">
                         <!-- Play/Pause/Speaker button -->
-                        <button 
-                          class="btn btn-ghost btn-xs" 
+                        <button
+                          class="btn btn-ghost btn-xs"
                           @click="$store.app.playMessageAudio(message.content)"
                           :disabled="$store.app.audioCache.has(message.content) && $store.app.audioCache.get(message.content) === 'loading'">
-                          
+
                           <!-- Loading spinner -->
                           <template x-if="$store.app.audioCache.has(message.content) && $store.app.audioCache.get(message.content) === 'loading'">
                             <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -134,14 +139,14 @@
                               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                           </template>
-                          
+
                           <!-- Play icon -->
                           <template x-if="!$store.app.audioPlayers.has(message.content) && (!$store.app.audioCache.has(message.content) || $store.app.audioCache.get(message.content) !== 'loading')">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                             </svg>
                           </template>
-                          
+
                           <!-- Pause icon -->
                           <template x-if="$store.app.audioPlayers.has(message.content) && $store.app.audioPlayers.get(message.content).isPlaying">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,26 +159,26 @@
                         <template x-if="$store.app.audioPlayers.has(message.content)">
                           <div class="flex items-center gap-2" style="min-width: 150px">
                             <!-- Current time -->
-                            <span 
-                              class="text-xs opacity-50" 
+                            <span
+                              class="text-xs opacity-50"
                               x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).currentTime)"
                               x-effect="$store.app.audioPlayers.get(message.content).currentTime">
                             </span>
-                            
+
                             <!-- Progress bar -->
-                            <div 
-                              class="flex-1 h-1 bg-base-300 rounded cursor-pointer" 
+                            <div
+                              class="flex-1 h-1 bg-base-300 rounded cursor-pointer"
                               @click="$store.app.seekAudio(message.content, $event)">
-                              <div 
-                                class="h-full bg-primary rounded" 
+                              <div
+                                class="h-full bg-primary rounded"
                                 x-effect="$store.app.audioPlayers.get(message.content).currentTime"
                                 :style="`width: ${($store.app.audioPlayers.get(message.content).currentTime / $store.app.audioPlayers.get(message.content).duration) * 100}%`">
                               </div>
                             </div>
-                            
+
                             <!-- Duration -->
-                            <span 
-                              class="text-xs opacity-50" 
+                            <span
+                              class="text-xs opacity-50"
                               x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).duration)"
                               x-effect="$store.app.audioPlayers.get(message.content).duration">
                             </span>
@@ -358,7 +363,7 @@
 
         <!-- ComfyUI Workflow Settings -->
         <div class="divider">ComfyUI Workflow Settings</div>
-      
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="label">
@@ -386,16 +391,15 @@
         <div>
           <label class="label">
             <span class="label-text">Workflow JSON</span>
-            <button 
+            <button
               class="btn btn-xs btn-ghost"
               @click="$store.app.formatWorkflow()">
               Format JSON
             </button>
           </label>
-          <div 
-            id="workflow-editor" 
-            class="h-96 border rounded-lg overflow-hidden"
-            x-init="$store.app.initMonacoEditor()">
+          <div
+            id="workflow-editor"
+            class="h-96 border rounded-lg overflow-hidden monaco">
           </div>
         </div>
       </div>

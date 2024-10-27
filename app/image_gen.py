@@ -208,7 +208,32 @@ async def generate_image_comfy(workflow: str) -> ImageResponse:
     logger.info("Starting ComfyUI workflow image generation")
 
     def run_workflow(workflow_path: str) -> List[str]:
-        # Existing run_workflow implementation...
+        logger.info(f"Starting inference with workflow: {workflow_path}")
+        cmd = f"comfy run --workflow {workflow_path} --wait --timeout 1200 --port {os.getenv('COMFYUI_PORT', '8188')} --host {os.getenv('COMFYUI_HOST', '0.0.0.0')} --verbose"
+        try:
+            result = subprocess.run(
+                cmd, shell=True, check=True, capture_output=True, text=True
+            )
+            logger.info("Inference completed successfully")
+            logger.info(f"Subprocess stdout:\n{result.stdout}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Inference failed: {e}")
+            logger.error(f"Subprocess stderr:\n{e.stderr}")
+            raise
+
+        output_dir = "/workspace/ComfyUI/output"
+        logger.info(f"Searching for output images in: {output_dir}")
+
+        image_paths = []
+        for root, dirs, files in os.walk(output_dir):
+            for file in files:
+                if file.lower().endswith(".png"):
+                    full_path = os.path.join(root, file)
+                    image_paths.append(full_path)
+                    logger.info(f"Found output image: {full_path}")
+
+        logger.info(f"Total output images found: {len(image_paths)}")
+        return image_paths
         pass
 
     try:

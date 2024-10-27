@@ -17,12 +17,21 @@ import json
 from app.models import AudioGenerationRequest, AudioResponse
 from app.audio_gen import generate_audio
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
 logger = setup_logging()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Initialize templates
 templates = Jinja2Templates(directory="templates")

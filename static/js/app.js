@@ -25,8 +25,7 @@ document.addEventListener('alpine:init', () => {
       positivePromptPlaceholder: localStorage.getItem('positivePromptPlaceholder') || '{positive_prompt}',
       negativePromptPlaceholder: localStorage.getItem('negativePromptPlaceholder') || '{negative_prompt}',
       savedConfigs: JSON.parse(localStorage.getItem('savedConfigs')) || [],
-      selectedConfigIndex: -1,
-      editor: null
+      selectedConfigIndex: -1
     },
     currentlyEditingMessageIndex: null,
     editingContent: '',
@@ -45,7 +44,7 @@ document.addEventListener('alpine:init', () => {
 
     saveEdit() {
       if (this.currentlyEditingMessageIndex === null) return;
-      
+
       // Trim the content and check if it's not empty
       const trimmedContent = this.editingContent.trim();
       if (!trimmedContent) {
@@ -55,11 +54,11 @@ document.addEventListener('alpine:init', () => {
 
       // Update the message
       this.chatHistory[this.currentlyEditingMessageIndex].content = trimmedContent;
-      
+
       // Reset editing state
       this.currentlyEditingMessageIndex = null;
       this.editingContent = '';
-      
+
       // Save to storage
       this.saveState();
     },
@@ -76,8 +75,10 @@ document.addEventListener('alpine:init', () => {
       interval_seconds: 10
     },
     selectedImage: null,
+
     init() {
       this.loadFromStorage();
+      window.editor.setValue(this.config.comfyWorkflow);
       this.applyTheme(this.theme);
       this.setupAuthorSelector();
       this.renderKeywords();
@@ -218,6 +219,9 @@ document.addEventListener('alpine:init', () => {
         // Load config separately
         this.config.storytellerPrompt = localStorage.getItem('storytellerPrompt') || '';
         this.config.imagePrompt = localStorage.getItem('imagePrompt') || '';
+        this.config.comfyWorkflow = localStorage.getItem('comfyWorkflow') || '';
+        this.config.positivePromptPlaceholder = localStorage.getItem('positivePromptPlaceholder') || '';
+        this.config.negativePromptPlaceholder = localStorage.getItem('negativePromptPlaceholder') || '';
       } catch (error) {
         console.error('Failed to load state:', error);
       }
@@ -242,6 +246,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     saveConfig() {
+      this.config.comfyWorkflow = window.editor.getValue();
       localStorage.setItem('storytellerPrompt', this.config.storytellerPrompt);
       localStorage.setItem('imagePrompt', this.config.imagePrompt);
       localStorage.setItem('comfyWorkflow', this.config.comfyWorkflow);
@@ -251,6 +256,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     addNewConfig() {
+      this.config.comfyWorkflow = window.editor.getValue();
       const nextConfigNum = this.config.savedConfigs.length + 1;
       const newConfig = {
         id: nextConfigNum,
@@ -261,7 +267,7 @@ document.addEventListener('alpine:init', () => {
         positivePromptPlaceholder: this.config.positivePromptPlaceholder,
         negativePromptPlaceholder: this.config.negativePromptPlaceholder
       };
-      
+
       this.config.savedConfigs.push(newConfig);
       localStorage.setItem('savedConfigs', JSON.stringify(this.config.savedConfigs));
       this.config.selectedConfigIndex = this.config.savedConfigs.length - 1;
@@ -273,49 +279,27 @@ document.addEventListener('alpine:init', () => {
         if (selectedConfig) {
           this.config.storytellerPrompt = selectedConfig.storytellerPrompt;
           this.config.imagePrompt = selectedConfig.imagePrompt;
-          this.config.comfyWorkflow = selectedConfig.comfyWorkflow;
           this.config.positivePromptPlaceholder = selectedConfig.positivePromptPlaceholder;
           this.config.negativePromptPlaceholder = selectedConfig.negativePromptPlaceholder;
-          
-          // Update editor content if it exists
-          if (this.config.editor) {
-            this.config.editor.setValue(this.config.comfyWorkflow);
+
+          try {
+            const parsed = JSON.parse(selectedConfig.comfyWorkflow);
+            this.config.comfyWorkflow = JSON.stringify(parsed, null, 2);
+            window.editor.setValue(this.config.comfyWorkflow);
+          } catch (e) {
+            this.showError('Invalid JSON');
+            window.editor.setValue("{}");
           }
         }
       }
     },
 
-    initMonacoEditor() {
-      require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
-      require(['vs/editor/editor.main'], () => {
-        this.config.editor = monaco.editor.create(document.getElementById('workflow-editor'), {
-          value: this.config.comfyWorkflow,
-          language: 'json',
-          theme: this.theme === 'dark' ? 'vs-dark' : 'vs',
-          automaticLayout: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          fontSize: 14,
-          lineNumbers: 'on',
-          renderLineHighlight: 'all',
-          formatOnPaste: true,
-          formatOnType: true
-        });
-
-        // Add listener for content changes
-        this.config.editor.onDidChangeModelContent(() => {
-          this.config.comfyWorkflow = this.config.editor.getValue();
-        });
-      });
-    },
-
     formatWorkflow() {
+      this.config.comfyWorkflow = window.editor.getValue();
       try {
         const parsed = JSON.parse(this.config.comfyWorkflow);
         this.config.comfyWorkflow = JSON.stringify(parsed, null, 2);
-        if (this.config.editor) {
-          this.config.editor.setValue(this.config.comfyWorkflow);
-        }
+        window.editor.setValue(this.config.comfyWorkflow);
       } catch (e) {
         this.showError('Invalid JSON');
       }
@@ -586,7 +570,7 @@ document.addEventListener('alpine:init', () => {
         if (this.audioCache.get(text) === 'loading') {
           return;
         }
-        
+
         // Check cache first
         let audioUrl;
         if (this.audioCache.has(text)) {
@@ -615,14 +599,14 @@ document.addEventListener('alpine:init', () => {
 
           const data = await response.json();
           audioUrl = data.url;
-          
+
           // Cache the URL
           this.audioCache.set(text, audioUrl);
         }
-        
+
         // Create and play the audio
         const audio = new Audio(audioUrl);
-        
+
         // Create player state object with reactive properties
         const playerState = {
           audio,
@@ -630,7 +614,7 @@ document.addEventListener('alpine:init', () => {
           currentTime: 0,
           isPlaying: true
         };
-        
+
         // Set up audio event listeners
         audio.addEventListener('loadedmetadata', () => {
           // Use Alpine's reactivity system to update the state
@@ -638,14 +622,14 @@ document.addEventListener('alpine:init', () => {
             playerState.duration = audio.duration;
           });
         });
-        
+
         audio.addEventListener('timeupdate', () => {
           // Use Alpine's reactivity system to update the state
           this.$nextTick(() => {
             playerState.currentTime = audio.currentTime;
           });
         });
-        
+
         audio.addEventListener('ended', () => {
           this.$nextTick(() => {
             playerState.isPlaying = false;
@@ -664,13 +648,13 @@ document.addEventListener('alpine:init', () => {
             playerState.isPlaying = true;
           });
         });
-        
+
         // Store the player state
         this.audioPlayers.set(text, playerState);
-        
+
         // Play the audio
         await audio.play();
-        
+
       } catch (error) {
         console.error('Error playing audio:', error);
         this.showError('Failed to play audio');
