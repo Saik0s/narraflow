@@ -86,19 +86,19 @@ class StoryApp {
                 const controls = document.createElement('div');
                 controls.className = 'edit-controls';
                 controls.innerHTML = `
-                    <button onclick="app.editMessage('${msg.id}')">Edit</button>
-                    <button onclick="app.deleteMessage('${msg.id}')">Delete</button>
+                    <button onclick="app.editMessage('${item.id}')">Edit</button>
+                    <button onclick="app.deleteMessage('${item.id}')">Delete</button>
                 `;
                 
-                if (msg.thoughts) {
+                if (item.thoughts) {
                     const thoughts = document.createElement('thinking');
                     thoughts.className = 'thoughts';
-                    thoughts.textContent = msg.thoughts;
+                    thoughts.textContent = item.thoughts;
                     messageDiv.appendChild(thoughts);
                 }
                 
-                if (Array.isArray(msg.dialog)) {
-                    msg.dialog.forEach(entry => {
+                if (Array.isArray(item.dialog)) {
+                    item.dialog.forEach(entry => {
                         if (!entry || !entry.speaker) return; // Skip invalid dialog entries
                         const text = document.createElement('p');
                         text.className = `dialog ${entry.speaker.toLowerCase()}`;
