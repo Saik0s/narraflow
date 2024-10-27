@@ -45,12 +45,15 @@ class StoryApp {
         });
 
         // Initial dark mode check
-        this.darkModeToggle.checked = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        this.setTheme(this.darkModeToggle.checked ? 'dark' : 'light');
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        this.darkModeToggle.checked = savedTheme === 'dark';
+        this.setTheme(savedTheme);
     }
 
     setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
     }
 
     toggleDarkMode() {
