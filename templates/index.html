@@ -118,7 +118,7 @@
           <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
             <div id="images-container"
-                 class="carousel carousel-vertical rounded-box flex-1 min-h-0"
+                 class="carousel carousel-vertical carousel-end rounded-box flex-1 min-h-0"
                  x-data="imageCarousel"
                  x-init="initLazyLoad">
               <template x-for="(imageUrl, index) in $store.app.imageHistory" :key="index">
