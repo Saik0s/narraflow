@@ -276,8 +276,10 @@ document.addEventListener('alpine:init', () => {
         const response = await generateImage(this.chatHistory);
         if (response?.image_url) {
           this.imageHistory.push(response.image_url);
-          this.lastImageGeneration = Date.now();;
+          this.lastImageGeneration = Date.now();
           this.saveState();
+          // Dispatch custom event when images are updated
+          window.dispatchEvent(new CustomEvent('images-changed'));
         }
       } catch (error) {
         this.showError('Failed to generate image');

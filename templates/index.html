@@ -120,7 +120,15 @@
             <div id="images-container"
                  class="carousel carousel-vertical carousel-end rounded-box flex-1 min-h-0"
                  x-data="imageCarousel"
-                 x-init="initLazyLoad">
+                 x-init="initLazyLoad"
+                 x-effect="$nextTick(() => {
+                   const container = $el;
+                   container.scrollTop = container.scrollHeight;
+                 })"
+                 @images-changed.window="$nextTick(() => {
+                   const container = $el;
+                   container.scrollTop = container.scrollHeight;
+                 })">
               <template x-for="(imageUrl, index) in $store.app.imageHistory" :key="index">
                 <div class="carousel-item h-auto w-full">
                   <img
