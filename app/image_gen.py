@@ -226,6 +226,7 @@ async def generate_image_comfy(workflow: str) -> ImageResponse:
             logger.info(f"Subprocess stdout:\n{result.stdout}")
         except subprocess.CalledProcessError as e:
             logger.error(f"Inference failed: {e}")
+            logger.error(f"Subprocess stdout:\n{e.output}")
             logger.error(f"Subprocess stderr:\n{e.stderr}")
             raise
 
