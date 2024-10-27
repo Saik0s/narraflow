@@ -184,6 +184,26 @@ img:not(.lazy) {
   opacity: 1;
 }
 /* Add these styles */
+.chat textarea {
+  min-height: 3em;
+  resize: vertical;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+.chat .btn-success, .chat .btn-error {
+  width: 2rem;
+  height: 2rem;
+  min-height: 0;
+  padding: 0;
+}
+
+.chat .editing-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .group:hover .group-hover\:opacity-100 {
     opacity: 1;
 }

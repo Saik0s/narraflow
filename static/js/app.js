@@ -23,6 +23,7 @@ document.addEventListener('alpine:init', () => {
       selectedConfigIndex: -1
     },
     currentlyEditingMessageIndex: null,
+    editingContent: '',
     selectedAuthor: 'narrator',
     currentInput: '',
     imageSettings: {
