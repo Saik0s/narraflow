@@ -13,7 +13,7 @@ from app.models import (
 )
 from app.llm import process_chat
 from app.image_gen import generate_image, generate_image_comfy, generate_prompt
-import logging
+from app.logging_config import setup_logging
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import json
