@@ -337,7 +337,20 @@ class StoryApp {
     }
 
     updateImage(imageUrl) {
-        this.currentImage.src = imageUrl;
+        const imageContainer = document.getElementById('images-container');
+        const imageWrapper = document.createElement('div');
+        imageWrapper.className = 'card bg-base-300 shadow-lg';
+        
+        const imageBody = document.createElement('div');
+        imageBody.className = 'card-body p-4';
+        
+        const image = document.createElement('img');
+        image.src = imageUrl;
+        image.className = 'w-full h-auto rounded-lg';
+        
+        imageBody.appendChild(image);
+        imageWrapper.appendChild(imageBody);
+        imageContainer.insertBefore(imageWrapper, imageContainer.firstChild);
     }
 
     handleKeywordClick(keyword) {

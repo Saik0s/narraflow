@@ -22,23 +22,33 @@
             </div>
         </div>
         <div class="card bg-base-200 shadow-xl h-full">
-            <div class="card-body">
-                <h2 class="card-title">Story Visualization</h2>
-                <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
-            </div>
-            <div class="card-body border-t border-base-300">
-                <label class="toggle">
-                    <input type="checkbox" id="image-gen-enabled" checked>
-                    <span class="toggle-label">Image Generation</span>
-                </label>
-                <select id="image-gen-mode">
-                    <option value="after_chat">After Each Chat</option>
-                    <option value="periodic">Periodic</option>
-                    <option value="manual">Manual Only</option>
-                </select>
-                <div id="interval-setting" style="display: none;">
-                    <input type="number" id="interval-seconds" min="5" value="30">
-                    <span>seconds</span>
+            <div class="card-body grid grid-cols-2 gap-4 p-0">
+                <!-- Chat Column -->
+                <div class="border-r border-base-300 p-4">
+                    <div id="chat-messages" class="min-h-[400px] overflow-y-auto"></div>
+                </div>
+                
+                <!-- Images Column -->
+                <div class="p-4">
+                    <h2 class="card-title mb-4">Story Visualization</h2>
+                    <div class="image-controls mb-4">
+                        <label class="toggle">
+                            <input type="checkbox" id="image-gen-enabled" checked>
+                            <span class="toggle-label">Image Generation</span>
+                        </label>
+                        <select id="image-gen-mode" class="select select-bordered w-full mt-2">
+                            <option value="after_chat">After Each Chat</option>
+                            <option value="periodic">Periodic</option>
+                            <option value="manual">Manual Only</option>
+                        </select>
+                        <div id="interval-setting" style="display: none;" class="mt-2">
+                            <input type="number" id="interval-seconds" min="5" value="30" class="input input-bordered w-20">
+                            <span>seconds</span>
+                        </div>
+                    </div>
+                    <div id="images-container" class="overflow-y-auto max-h-[600px] space-y-4">
+                        <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
+                    </div>
                 </div>
             </div>
         </div>
