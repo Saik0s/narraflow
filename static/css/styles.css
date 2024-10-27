@@ -226,6 +226,27 @@ img:not(.lazy) {
     white-space: normal;
 }
 
+/* Audio player styles */
+.audio-progress {
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  transition: height 0.2s;
+}
+
+.audio-progress:hover {
+  height: 6px;
+}
+
+.audio-controls {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.audio-controls:hover {
+  opacity: 1;
+}
+
 /* Ensure the dropdown stays visible while hovering */
 .dropdown:hover .dropdown-content {
     visibility: visible;

@@ -12,6 +12,7 @@ document.addEventListener('alpine:init', () => {
     keywords: [],
     selectedKeywords: [],
     audioCache: new Map(),
+    audioPlayers: new Map(), // Track audio elements and their states
     commandHistory: [],
     historyIndex: -1,
     isProcessing: false,
@@ -527,50 +528,122 @@ document.addEventListener('alpine:init', () => {
 
     async playMessageAudio(text) {
       try {
+        // Stop any currently playing audio for this message
+        if (this.audioPlayers.has(text)) {
+          const existingPlayer = this.audioPlayers.get(text);
+          existingPlayer.audio.pause();
+          existingPlayer.audio.currentTime = 0;
+          this.audioPlayers.delete(text);
+          return;
+        }
+
         // Check if already loading
         if (this.audioCache.get(text) === 'loading') {
           return;
         }
         
         // Check cache first
+        let audioUrl;
         if (this.audioCache.has(text)) {
           const cachedUrl = this.audioCache.get(text);
           if (cachedUrl !== 'loading') {
-            const audio = new Audio(cachedUrl);
-            await audio.play();
-            return;
+            audioUrl = cachedUrl;
           }
         }
 
-        // Set loading state
-        this.audioCache.set(text, 'loading');
+        if (!audioUrl) {
+          // Set loading state
+          this.audioCache.set(text, 'loading');
 
-        // Generate new audio
-        const response = await fetch('/api/audio/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text })
-        });
+          // Generate new audio
+          const response = await fetch('/api/audio/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text })
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to generate audio');
+          if (!response.ok) {
+            throw new Error('Failed to generate audio');
+          }
+
+          const data = await response.json();
+          audioUrl = data.url;
+          
+          // Cache the URL
+          this.audioCache.set(text, audioUrl);
         }
-
-        const data = await response.json();
         
-        // Cache the URL
-        this.audioCache.set(text, data.url);
+        // Create and play the audio
+        const audio = new Audio(audioUrl);
+        
+        // Create player state object
+        const playerState = {
+          audio,
+          duration: 0,
+          currentTime: 0,
+          isPlaying: true
+        };
+        
+        // Set up audio event listeners
+        audio.addEventListener('loadedmetadata', () => {
+          playerState.duration = audio.duration;
+        });
+        
+        audio.addEventListener('timeupdate', () => {
+          playerState.currentTime = audio.currentTime;
+        });
+        
+        audio.addEventListener('ended', () => {
+          playerState.isPlaying = false;
+          this.audioPlayers.delete(text);
+        });
+        
+        // Store the player state
+        this.audioPlayers.set(text, playerState);
         
         // Play the audio
-        const audio = new Audio(data.url);
         await audio.play();
+        
       } catch (error) {
         console.error('Error playing audio:', error);
         this.showError('Failed to play audio');
         // Clear loading state on error
         this.audioCache.delete(text);
+        this.audioPlayers.delete(text);
+      }
+    },
+
+    formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    pauseAudio(text) {
+      const player = this.audioPlayers.get(text);
+      if (player) {
+        player.audio.pause();
+        player.isPlaying = false;
+      }
+    },
+
+    resumeAudio(text) {
+      const player = this.audioPlayers.get(text);
+      if (player) {
+        player.audio.play();
+        player.isPlaying = true;
+      }
+    },
+
+    seekAudio(text, event) {
+      const player = this.audioPlayers.get(text);
+      if (player) {
+        const rect = event.target.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const percentage = x / rect.width;
+        player.audio.currentTime = player.audio.duration * percentage;
       }
     },
   });
