@@ -14,7 +14,13 @@ client = instructor.from_openai(openai_client)
 
 
 async def process_chat(message: str, history: list[str]) -> LLMResponse:
-    context = "\n".join(history[-5:] + [message])  # Keep last 5 messages for context
+    # Format history for better context
+    formatted_history = []
+    for msg in history[-10:]:  # Keep last 10 messages for context
+        formatted_history.append(f"User: {msg}")
+    formatted_history.append(f"User: {message}")
+    
+    context = "\n".join(formatted_history)
 
     system_prompt = """You are an interactive storytelling assistant. Your response must follow this exact structure:
     - thoughts: A brief context about the story progression (string)

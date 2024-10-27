@@ -25,8 +25,11 @@ async def root():
 async def chat_endpoint(message: ChatMessage):
     try:
         logger.info("Processing chat message")
-        # Process chat message
-        llm_response = await process_chat(message.message, [message.message])
+        # Extract history messages
+        history = [msg.get('content', '') for msg in message.history]
+        
+        # Process chat message with full history
+        llm_response = await process_chat(message.message, history)
 
         # Generate image based on response
         try:
@@ -55,6 +58,27 @@ async def image_reaction(reaction: ImageReaction):
         logger.error(f"Error processing image reaction: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+
+@app.put("/api/chat/{message_id}")
+async def edit_message(message_id: str, message: ChatMessage):
+    try:
+        logger.info(f"Editing message {message_id}")
+        # Process edited message with updated history
+        history = [msg.get('content', '') for msg in message.history]
+        llm_response = await process_chat(message.message, history)
+        return {"llm_response": llm_response.dict()}
+    except Exception as e:
+        logger.error(f"Error editing message: {str(e)}")
+        return {"error": f"Error editing message: {str(e)}"}, 500
+
+@app.delete("/api/chat/{message_id}")
+async def delete_message(message_id: str):
+    try:
+        logger.info(f"Deleting message {message_id}")
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error deleting message: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
