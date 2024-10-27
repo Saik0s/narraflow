@@ -67,6 +67,30 @@ class ImageGenerationRequest(BaseModel):
         from_attributes = True
 
 
+class ComfyWorkflowRequest(BaseModel):
+    workflow: dict = Field(..., description="ComfyUI workflow configuration")
+    history: List[Message]
+    imageHistory: List[dict] = Field(default_factory=list)
+    systemPrompt: Optional[str] = Field(default="")
+    positivePromptPlaceholder: Optional[str] = Field(
+        default="String to replace with positive prompt in the workflow"
+    )
+    negativePromptPlaceholder: Optional[str] = Field(
+        default="String to replace with negative prompt in the workflow"
+    )
+
+    class Config:
+        from_attributes = True
+
+
 class ImageResponse(BaseModel):
     urls: list[str] = Field(description="List of generated image URLs")
     prompt: str = Field(description="The prompt used to generate the images")
+
+
+class AudioGenerationRequest(BaseModel):
+    text: str
+
+
+class AudioResponse(BaseModel):
+    url: str

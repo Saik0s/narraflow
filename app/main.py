@@ -2,9 +2,16 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
-from app.models import LLMMessage, NewChatMessage, ImageGenerationRequest, Message
+from app.models import (
+    ComfyWorkflowRequest,
+    ImageResponse,
+    LLMMessage,
+    NewChatMessage,
+    ImageGenerationRequest,
+    Message,
+)
 from app.llm import process_chat
-from app.image_gen import generate_image, generate_prompt
+from app.image_gen import generate_image, generate_image_comfy, generate_prompt
 import logging
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -13,6 +20,8 @@ import os
 import hashlib
 from pathlib import Path
 from starlette.middleware.base import BaseHTTPMiddleware
+from app.models import AudioGenerationRequest, AudioResponse
+from app.audio_gen import generate_audio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -73,38 +82,45 @@ async def chat(chat_message: NewChatMessage):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/image/generate")
+@app.post("/api/image/generate", response_model=ImageResponse)
 async def generate_image_endpoint(imageGen: ImageGenerationRequest):
     try:
         logger.info(f"Received image generation request: {imageGen}")
         prompt = await generate_prompt(imageGen)
-        image_response = await generate_image(prompt)
-        logger.info(f"Generated image response: {image_response}")
-        return image_response
+        urls = await generate_image(prompt)
+        logger.info(f"Generated image response: {urls}")
+        return ImageResponse(urls=urls, prompt=prompt.positive)
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/images")
-async def get_images():
-    """Returns a list of available image paths from the static/images directory"""
-    images_dir = Path("static/images")
-    if not images_dir.exists():
-        return {"images": []}
+@app.post("/api/image/comfyui", response_model=ImageResponse)
+async def generate_image_endpoint(comfyGen: ComfyWorkflowRequest):
+    try:
+        logger.info(f"Received image generation request: {comfyGen}")
+        prompt = await generate_prompt(ImageGenerationRequest(**comfyGen.model_dump()))
+        workflow_json = json.dumps(comfyGen.workflow)
+        workflow_json = workflow_json.replace(
+            comfyGen.positivePromptPlaceholder, prompt.positive
+        )
+        workflow_json = workflow_json.replace(
+            comfyGen.negativePromptPlaceholder, prompt.negative
+        )
+        urls = await generate_image_comfy(workflow_json)
+        logger.info(f"Generated image response: {urls}")
+        return ImageResponse(urls=urls, prompt=prompt.positive)
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    image_files = [
-        f"/static/images/{f.name}" for f in images_dir.glob("*.{jpg,png,gif}")
-    ]
-    return {"images": image_files}
+
+@app.post("/api/audio/generate", response_model=AudioResponse)
+async def generate_audio_endpoint(request: AudioGenerationRequest):
+    return await generate_audio(request.text)
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-from .audio_gen import AudioGenerationRequest, AudioResponse, generate_audio
-
-@app.post("/api/audio/generate", response_model=AudioResponse)
-async def generate_audio_endpoint(request: AudioGenerationRequest):
-    return await generate_audio(request.text)

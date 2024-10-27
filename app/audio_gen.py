@@ -9,22 +9,17 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel
 
-class AudioGenerationRequest(BaseModel):
-    text: str
+from app.models import AudioResponse
 
-class AudioResponse(BaseModel):
-    url: str
 
 async def generate_audio(text: str) -> AudioResponse:
     try:
         # Initialize ElevenLabs client
-        client = ElevenLabs(
-            api_key=os.getenv("ELEVENLABS_API_KEY"),
-        )
+        client = ElevenLabs()
 
         # Generate audio bytes
         audio_response = client.text_to_speech.convert(
-            voice_id="pNInz6obpgDQGcFmaJgB",  # Adam pre-made voice
+            voice_id="cgSgspJ2msm6clMCkdW9",  # Adam pre-made voice
             output_format="mp3_22050_32",
             text=text,
             model_id="eleven_turbo_v2_5",
@@ -37,7 +32,7 @@ async def generate_audio(text: str) -> AudioResponse:
         )
 
         # Collect all chunks into a single bytes object
-        audio_bytes = b''
+        audio_bytes = b""
         for chunk in audio_response:
             if chunk:
                 audio_bytes += chunk
@@ -47,7 +42,7 @@ async def generate_audio(text: str) -> AudioResponse:
             os.getenv("MINIO_ENDPOINT", "minio:9000"),
             access_key=os.getenv("MINIO_ACCESS_KEY"),
             secret_key=os.getenv("MINIO_SECRET_KEY"),
-            secure=False  # Set to True if using HTTPS
+            secure=True,
         )
 
         bucket_name = os.getenv("MINIO_BUCKET_NAME", "audio-files")
@@ -66,15 +61,11 @@ async def generate_audio(text: str) -> AudioResponse:
             filename,
             audio_bytes_io,
             length=len(audio_bytes),
-            content_type="audio/mpeg"
+            content_type="audio/mpeg",
         )
 
         # Generate URL
-        url = minio_client.presigned_get_object(
-            bucket_name,
-            filename,
-            expires=7 * 24 * 60 * 60  # URL expires in 7 days
-        )
+        url = minio_client.presigned_get_object(bucket_name, filename)
 
         return AudioResponse(url=url)
 

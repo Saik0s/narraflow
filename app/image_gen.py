@@ -3,37 +3,105 @@ import fal_client
 import instructor
 from anthropic import AsyncAnthropic
 from typing import List
+import json
+import subprocess
+import uuid
+from pathlib import Path
+import os
+from minio import Minio
+from minio.error import S3Error
+from datetime import timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import aiohttp
+import asyncio
 from pydantic import BaseModel, Field
-from app.models import ImageResponse, ImageGenerationRequest
+from app.models import ComfyWorkflowRequest, ImageResponse, ImageGenerationRequest
 from app.utils import history_to_messages
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Add MinIO client initialization at module level
+minio_client = Minio(
+    os.getenv("MINIO_ENDPOINT", "minio:9000"),
+    access_key=os.getenv("MINIO_ACCESS_KEY"),
+    secret_key=os.getenv("MINIO_SECRET_KEY"),
+    secure=True,
+)
+bucket_name = os.getenv("MINIO_BUCKET_NAME", "image-files")
 
 class ImagePrompt(BaseModel):
     """Structure for generating image prompts"""
 
-    main_scene: str = Field(..., description="The main scene or action to be depicted")
-    style: str = Field(..., description="The artistic style and mood of the image")
-    details: str = Field(..., description="Additional visual details and elements")
+    positive: str = Field(..., description="Positive prompt")
+    negative: str = Field(..., description="Negative prompt")
 
-    def to_prompt(self) -> str:
-        """Convert the structured prompt to a string"""
-        return f"{self.main_scene}. {self.style}. {self.details}"
+
+class ImagePromptDetails(BaseModel):
+    """Structure for generating detailed image prompts"""
+
+    style: str = Field(
+        ...,
+        description="Overall image style, genre, or artistic technique (e.g. photorealistic, oil painting, digital art, anime, film noir)",
+    )
+    characters: str = Field(
+        ...,
+        description="Comprehensive description of main characters, including age, gender, ethnicity, body type, height, weight, hair color and style, eye color, skin tone, facial features, and any distinguishing marks or characteristics",
+    )
+    clothing_and_accessories: str = Field(
+        ...,
+        description="Detailed description of characters' attire, including fabric types, colors, patterns, fit, and style. Include all accessories such as jewelry, hats, glasses, or props",
+    )
+    expressions_and_poses: str = Field(
+        ...,
+        description="Vivid description of characters' facial expressions, body language, gestures, and specific poses or actions. Include emotional states and interactions between characters if applicable",
+    )
+    scene: str = Field(
+        ...,
+        description="Thorough depiction of the setting, including time of day, season, weather, architectural details, natural elements, and any significant objects or props in the environment",
+    )
+    lighting: str = Field(
+        ...,
+        description="Precise description of lighting conditions, including source (natural or artificial), intensity, color temperature, shadows, highlights, and any special lighting effects",
+    )
+    camera: str = Field(
+        ...,
+        description="Specific camera details including angle (e.g. low angle, bird's eye view), shot type (e.g. close-up, wide shot), lens used (e.g. wide-angle, telephoto), depth of field, and any camera movements",
+    )
+    additional_details: str = Field(
+        ...,
+        description="Any extra visual elements, textures, colors, or specific details to enhance the image. Include atmosphere, mood, or thematic elements",
+    )
+    negative_prompt: str = Field(
+        ...,
+        description="List of elements to explicitly exclude from the image, such as unwanted objects, styles, or characteristics",
+    )
+
+    def to_prompt(self) -> ImagePrompt:
+        """Convert the structured prompt to a detailed, cohesive string"""
+        positive_prompt = (
+            f"{self.style} image featuring {self.characters}. "
+            f"{self.clothing_and_accessories}. "
+            f"{self.expressions_and_poses}. "
+            f"Scene: {self.scene}. "
+            f"Lighting: {self.lighting}. "
+            f"Camera: {self.camera}. "
+            f"{self.additional_details}."
+        )
+        return ImagePrompt(positive=positive_prompt, negative=self.negative_prompt)
 
 
 # Initialize Anthropic client with instructor
 client = instructor.from_anthropic(AsyncAnthropic())
 
 
-async def generate_prompt(imageGen: ImageGenerationRequest) -> str:
+async def generate_prompt(imageGen: ImageGenerationRequest) -> ImagePrompt:
     """Generate an image prompt from chat history and image history"""
     try:
         # Format messages for Claude
         messages = history_to_messages(imageGen.history)
-        
+
         # Add context about previous images if available
         image_context = ""
         if imageGen.imageHistory:
@@ -59,7 +127,7 @@ async def generate_prompt(imageGen: ImageGenerationRequest) -> str:
             max_tokens=1024,
             system=system_prompt,
             messages=messages,
-            response_model=ImagePrompt,
+            response_model=ImagePromptDetails,
         )
 
         logger.info(f"Generated structured prompt: {prompt}")
@@ -70,29 +138,109 @@ async def generate_prompt(imageGen: ImageGenerationRequest) -> str:
         return "Placeholder image"
 
 
-async def generate_image(prompt: str) -> ImageResponse:
-    """Generate an image using Fal.ai FLUX API with progress tracking"""
+async def upload_to_minio(file_path: str) -> str:
+    """Upload file to MinIO and return presigned URL"""
+    try:
+        file_extension = os.path.splitext(os.path.basename(file_path))[1]
+        unique_file_name = f"{uuid.uuid4()}{file_extension}"
+
+        minio_client.fput_object(bucket_name, unique_file_name, file_path)
+        url = minio_client.presigned_get_object(bucket_name, unique_file_name)
+        logger.info(f"Successfully uploaded image to MinIO: {unique_file_name}")
+        return url
+    except S3Error as e:
+        logger.error(f"MinIO upload error: {e}")
+        raise
+
+
+async def download_image(url: str, temp_path: str) -> None:
+    """Download image from URL to temporary file"""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                with open(temp_path, "wb") as f:
+                    f.write(await response.read())
+            else:
+                raise Exception(f"Failed to download image: {response.status}")
+
+
+async def generate_image(prompt: ImagePrompt) -> List[str]:
+    """Generate an image using Fal.ai FLUX API and upload to MinIO"""
     try:
         logger.info(f"Generating image with prompt: {prompt}")
 
         result = await fal_client.subscribe_async(
             "fal-ai/flux/schnell",
             arguments={
-                "prompt": prompt,
+                "prompt": prompt.positive,
             },
         )
 
         if not result or "images" not in result:
             raise ValueError("Invalid response from Fal.ai API")
 
-        # Extract all image URLs from the result
-        image_urls = [img["url"] for img in result["images"]]
-        logger.info(f"Successfully generated {len(image_urls)} images")
+        # Download images and upload to MinIO
+        minio_urls = []
+        for img in result["images"]:
+            # Create temporary file
+            temp_path = f"/tmp/{uuid.uuid4()}.png"
+            try:
+                # Download image
+                await download_image(img["url"], temp_path)
 
-        # Return both URLs and prompt in response
-        return ImageResponse(urls=image_urls, prompt=prompt)
+                # Upload to MinIO
+                minio_url = await upload_to_minio(temp_path)
+                minio_urls.append(minio_url)
+            finally:
+                # Cleanup temporary file
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+
+        logger.info(f"Successfully processed {len(minio_urls)} images")
+        return minio_urls
 
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error generating image: {error_msg}")
         raise e
+
+
+async def generate_image_comfy(workflow: str) -> ImageResponse:
+    """Generate images using ComfyUI workflow and return MinIO URLs"""
+    logger.info("Starting ComfyUI workflow image generation")
+
+    def run_workflow(workflow_path: str) -> List[str]:
+        # Existing run_workflow implementation...
+        pass
+
+    try:
+        # Save workflow to temporary file
+        workflow_file = f"/tmp/workflow_{uuid.uuid4()}.json"
+        with open(workflow_file, "w") as f:
+            f.write(workflow)
+
+        # Run workflow and get image paths
+        image_paths = run_workflow(workflow_file)
+
+        # Upload images to MinIO in parallel
+        urls = []
+        for path in image_paths:
+            try:
+                url = await upload_to_minio(path)
+                urls.append(url)
+            except Exception as e:
+                logger.error(f"Failed to upload image: {e}")
+
+        # Cleanup temporary files
+        for path in image_paths:
+            try:
+                os.remove(path)
+            except Exception as e:
+                logger.error(f"Failed to delete temporary file {path}: {e}")
+        os.remove(workflow_file)
+
+        return urls
+
+    except Exception as e:
+        logger.error(f"Error in ComfyUI workflow processing: {e}")
+        raise
