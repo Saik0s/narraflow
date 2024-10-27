@@ -164,58 +164,12 @@ async def root(request: Request, session_id: Optional[str] = Cookie(None)):
 
 
 @app.post("/api/chat")
-async def chat(
-    request: Request,
-    message: Optional[str] = Form(None),
-    author: Optional[str] = Form(None),
-    chat_message: Optional[ChatMessage] = None,
-):
-    """
-    Handles chat messages from both HTMX and JSON requests
-    """
+async def chat(chat_message: ChatMessage):
     try:
-        # Determine if this is an HTMX request
-        is_htmx = request.headers.get("HX-Request") == "true"
-
-        if is_htmx:
-            # Get current state for history
-            state = state_manager.get_state()
-            # Handle HTMX form submission
-            chat_data = ChatMessage(
-                message=message or "",
-                author=author or "",
-                history=state.chat_history,  # Pass the chat history from state
-                selected_keywords=[],  # Add empty keywords list for HTMX requests
-            )
-        else:
-            # Handle JSON request
-            if not chat_message:
-                raise HTTPException(status_code=400, detail="Missing message data")
-            chat_data = chat_message
-
-        # Process the chat message
-        response = await process_chat(chat_data)
-
-        # Update state with new message
-        state = state_manager.get_state()
-        if response:
-            state.chat_history.append(response)
-
-        if is_htmx:
-            # Return HTML partial for HTMX
-            return templates.TemplateResponse(
-                "partials/message.html", {"request": request, "message": response}
-            )
-        else:
-            # Return JSON response
-            return {"llm_response": response}
-
+        response = await process_chat(chat_message)
+        return {"llm_response": response}
     except Exception as e:
-        logger.error(f"Error processing chat message: {str(e)}")
-        if is_htmx:
-            return templates.TemplateResponse(
-                "partials/error.html", {"request": request, "error": str(e)}
-            )
+        logger.error(f"Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -242,12 +196,11 @@ async def update_image_settings(settings: ImageSettings):
 @app.post("/api/image/generate")
 async def generate_image_endpoint(prompt: ImagePrompt):
     try:
-        logger.info("Processing image generation request")
         image_response = await generate_image(prompt)
         return image_response
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
-        return {"error": f"Error generating image: {str(e)}"}, 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # New routes for state management

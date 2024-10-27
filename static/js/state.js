@@ -1,10 +1,5 @@
-class AppState {
+export class AppState {
     constructor() {
-        this.initializeState();
-    }
-
-    initializeState() {
-        // Initialize with default values
         this.chatHistory = [];
         this.selectedKeywords = new Set();
         this.commandHistory = [];
@@ -16,71 +11,36 @@ class AppState {
             mode: 'after_chat',
             interval_seconds: 30
         };
+        this.loadFromStorage();
     }
 
-    loadState() {
+    loadFromStorage() {
         try {
-            const savedState = localStorage.getItem('appState');
-            if (!savedState) return;
-
-            const parsedState = JSON.parse(savedState);
-
-            // Clear current state before loading
-            this.initializeState();
-
-            // Validate and load chat history
-            if (Array.isArray(parsedState.chatHistory)) {
-                this.chatHistory = parsedState.chatHistory.filter(msg =>
-                    msg && (msg.type === 'image' || (msg.messages && Array.isArray(msg.messages)))
-                );
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.chatHistory = parsed.chatHistory || [];
+                this.commandHistory = parsed.commandHistory || [];
+                this.imageSettings = parsed.imageSettings || this.imageSettings;
+                // Convert stored keywords back to Set
+                this.selectedKeywords = new Set(parsed.selectedKeywords || []);
             }
-
-            // Load selected keywords
-            if (Array.isArray(parsedState.selectedKeywords)) {
-                this.selectedKeywords = new Set(parsedState.selectedKeywords);
-            }
-
-            // Load command history
-            if (Array.isArray(parsedState.commandHistory)) {
-                this.commandHistory = parsedState.commandHistory;
-            }
-
-            // Load image settings
-            if (parsedState.imageSettings) {
-                this.imageSettings = {
-                    enabled: Boolean(parsedState.imageSettings.enabled),
-                    mode: ['after_chat', 'periodic', 'manual'].includes(parsedState.imageSettings.mode)
-                        ? parsedState.imageSettings.mode
-                        : 'after_chat',
-                    interval_seconds: Math.max(5, parseInt(parsedState.imageSettings.interval_seconds) || 30)
-                };
-            }
-
-            // Load other primitive values
-            this.historyIndex = parseInt(parsedState.historyIndex) || -1;
-            this.lastImageGeneration = parseInt(parsedState.lastImageGeneration) || Date.now();
-
-            console.log('State loaded successfully');
         } catch (error) {
-            console.error('Error loading state:', error);
-            this.initializeState();
+            console.error('Failed to load state:', error);
         }
     }
 
-    saveState() {
+    saveToStorage() {
         try {
-            const stateToSave = {
+            const state = {
                 chatHistory: this.chatHistory,
-                selectedKeywords: Array.from(this.selectedKeywords),
                 commandHistory: this.commandHistory,
-                historyIndex: this.historyIndex,
-                lastImageGeneration: this.lastImageGeneration,
-                imageSettings: this.imageSettings
+                imageSettings: this.imageSettings,
+                selectedKeywords: Array.from(this.selectedKeywords)
             };
-            localStorage.setItem('appState', JSON.stringify(stateToSave));
-            console.log('State saved successfully');
+            localStorage.setItem('appState', JSON.stringify(state));
         } catch (error) {
-            console.error('Error saving state:', error);
+            console.error('Failed to save state:', error);
         }
     }
 
