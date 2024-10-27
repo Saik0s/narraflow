@@ -124,7 +124,7 @@ export class UI {
 
         if (appState.imageSettings.enabled &&
           appState.imageSettings.mode === 'after_chat') {
-          await this.handleImageGeneration(appState.chatHistory);
+          await this.handleImageGeneration();
         }
       }
     } catch (error) {
@@ -441,7 +441,7 @@ export class UI {
     this.stopImageGeneration();
     if (appState.imageSettings.mode === 'periodic') {
       this.imageGenTimer = setInterval(() => {
-        this.handleImageGeneration(appState.getState());
+        this.handleImageGeneration();
       }, appState.imageSettings.interval_seconds * 1000);
     }
   }
