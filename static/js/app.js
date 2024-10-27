@@ -578,7 +578,7 @@ document.addEventListener('alpine:init', () => {
         // Create and play the audio
         const audio = new Audio(audioUrl);
         
-        // Create player state object
+        // Create player state object with reactive properties
         const playerState = {
           audio,
           duration: 0,
@@ -588,16 +588,36 @@ document.addEventListener('alpine:init', () => {
         
         // Set up audio event listeners
         audio.addEventListener('loadedmetadata', () => {
-          playerState.duration = audio.duration;
+          // Use Alpine's reactivity system to update the state
+          this.$nextTick(() => {
+            playerState.duration = audio.duration;
+          });
         });
         
         audio.addEventListener('timeupdate', () => {
-          playerState.currentTime = audio.currentTime;
+          // Use Alpine's reactivity system to update the state
+          this.$nextTick(() => {
+            playerState.currentTime = audio.currentTime;
+          });
         });
         
         audio.addEventListener('ended', () => {
-          playerState.isPlaying = false;
-          this.audioPlayers.delete(text);
+          this.$nextTick(() => {
+            playerState.isPlaying = false;
+            this.audioPlayers.delete(text);
+          });
+        });
+
+        audio.addEventListener('pause', () => {
+          this.$nextTick(() => {
+            playerState.isPlaying = false;
+          });
+        });
+
+        audio.addEventListener('play', () => {
+          this.$nextTick(() => {
+            playerState.isPlaying = true;
+          });
         });
         
         // Store the player state
@@ -616,6 +636,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     formatTime(seconds) {
+      if (!seconds || isNaN(seconds)) return '0:00';
       const mins = Math.floor(seconds / 60);
       const secs = Math.floor(seconds % 60);
       return `${mins}:${secs.toString().padStart(2, '0')}`;

@@ -153,18 +153,29 @@
                         <template x-if="$store.app.audioPlayers.has(message.content)">
                           <div class="flex items-center gap-2" style="min-width: 150px">
                             <!-- Current time -->
-                            <span class="text-xs opacity-50" x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).currentTime)"></span>
+                            <span 
+                              class="text-xs opacity-50" 
+                              x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).currentTime)"
+                              x-effect="$store.app.audioPlayers.get(message.content).currentTime">
+                            </span>
                             
                             <!-- Progress bar -->
-                            <div class="flex-1 h-1 bg-base-300 rounded cursor-pointer" @click="$store.app.seekAudio(message.content, $event)">
+                            <div 
+                              class="flex-1 h-1 bg-base-300 rounded cursor-pointer" 
+                              @click="$store.app.seekAudio(message.content, $event)">
                               <div 
                                 class="h-full bg-primary rounded" 
+                                x-effect="$store.app.audioPlayers.get(message.content).currentTime"
                                 :style="`width: ${($store.app.audioPlayers.get(message.content).currentTime / $store.app.audioPlayers.get(message.content).duration) * 100}%`">
                               </div>
                             </div>
                             
                             <!-- Duration -->
-                            <span class="text-xs opacity-50" x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).duration)"></span>
+                            <span 
+                              class="text-xs opacity-50" 
+                              x-text="$store.app.formatTime($store.app.audioPlayers.get(message.content).duration)"
+                              x-effect="$store.app.audioPlayers.get(message.content).duration">
+                            </span>
                           </div>
                         </template>
                       </div>
