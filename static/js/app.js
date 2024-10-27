@@ -28,14 +28,14 @@ document.addEventListener('alpine:init', () => {
       mode: 'after_chat',
       interval_seconds: 10
     },
-
+    imageObserver: null,
 
     init() {
       this.loadFromStorage();
       this.applyTheme(this.theme);
-
       this.setupAuthorSelector();
       this.renderKeywords();
+      this.initImageObserver();
 
       // Start periodic generation if enabled
       if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
@@ -248,7 +248,7 @@ document.addEventListener('alpine:init', () => {
       if (this.periodicImageGenerationInterval) return;
       this.periodicImageGenerationInterval = setInterval(() => {
         if (this.imageSettings.mode === 'after_chat') {
-          stopPeriodicImageGeneration();
+          this.stopPeriodicImageGeneration();
           return;
         }
         this.handleImageGeneration();
@@ -279,7 +279,7 @@ document.addEventListener('alpine:init', () => {
         const response = await generateImage(this.chatHistory);
         if (response?.image_url) {
           this.imageHistory.push(response.image_url);
-          this.lastImageGeneration = now;
+          this.lastImageGeneration = Date.now();;
           this.saveState();
         }
       } catch (error) {
@@ -404,6 +404,36 @@ document.addEventListener('alpine:init', () => {
       if (sendButton) {
         sendButton.disabled = !this.isMessageValid() || this.isProcessing;
       }
-    }
+    },
+
+    initImageObserver() {
+      this.imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) {
+              img.src = img.dataset.src;
+              img.classList.remove('lazy');
+              this.imageObserver.unobserve(img);
+            }
+          }
+        });
+      }, {
+        root: document.getElementById('images-container'),
+        rootMargin: '50px',
+        threshold: 0.1
+      });
+    },
+
+    lazyLoadImages() {
+      if (!this.imageObserver) {
+        this.initImageObserver();
+      }
+
+      const lazyImages = document.querySelectorAll('img.lazy');
+      lazyImages.forEach(img => {
+        this.imageObserver.observe(img);
+      });
+    },
   });
 });

@@ -146,3 +146,30 @@
 .image-carousel-item:hover img {
   transform: scale(1.02);
 }
+
+/* Add these styles for lazy loading */
+img.lazy {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+img:not(.lazy) {
+  opacity: 1;
+}
+
+.carousel-item {
+  scroll-snap-align: start;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.carousel-item img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
