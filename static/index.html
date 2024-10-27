@@ -15,6 +15,21 @@
                 <button class="reaction" data-reaction="dislike">👎</button>
                 <button class="reaction" data-reaction="style">🎨</button>
             </div>
+            <div class="image-settings">
+                <label class="toggle">
+                    <input type="checkbox" id="image-gen-enabled" checked>
+                    <span class="toggle-label">Image Generation</span>
+                </label>
+                <select id="image-gen-mode">
+                    <option value="after_chat">After Each Chat</option>
+                    <option value="periodic">Periodic</option>
+                    <option value="manual">Manual Only</option>
+                </select>
+                <div id="interval-setting" style="display: none;">
+                    <input type="number" id="interval-seconds" min="5" value="30">
+                    <span>seconds</span>
+                </div>
+            </div>
         </div>
         
         <div class="chat-interface">

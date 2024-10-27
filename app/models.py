@@ -28,3 +28,8 @@ class ImageResponse(BaseModel):
 class ImageReaction(BaseModel):
     image_id: str
     reaction: Literal["like", "dislike", "style"]
+
+class ImageGenSettings(BaseModel):
+    enabled: bool
+    mode: Literal["after_chat", "periodic", "manual"]
+    interval_seconds: Optional[int] = None

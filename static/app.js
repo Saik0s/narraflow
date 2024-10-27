@@ -10,6 +10,17 @@ class StoryApp {
         this.commandHistory = [];
         this.historyIndex = -1;
         this.isProcessing = false;
+        this.imageGenTimer = null;
+        this.lastImageGeneration = Date.now();
+        
+        // Image generation settings
+        this.imageSettings = {
+            enabled: true,
+            mode: 'after_chat',
+            interval_seconds: 30
+        };
+        
+        this.setupImageControls();
     }
 
     setupEventListeners() {
@@ -19,6 +30,88 @@ class StoryApp {
         document.querySelectorAll('.reaction').forEach(button => {
             button.addEventListener('click', () => this.handleReaction(button.dataset.reaction));
         });
+    }
+
+    setupImageControls() {
+        const enabledToggle = document.getElementById('image-gen-enabled');
+        const modeSelect = document.getElementById('image-gen-mode');
+        const intervalSetting = document.getElementById('interval-setting');
+        const intervalInput = document.getElementById('interval-seconds');
+
+        enabledToggle.checked = this.imageSettings.enabled;
+        modeSelect.value = this.imageSettings.mode;
+        intervalInput.value = this.imageSettings.interval_seconds;
+
+        enabledToggle.addEventListener('change', (e) => {
+            this.imageSettings.enabled = e.target.checked;
+            if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+                this.startImageGeneration();
+            } else {
+                this.stopImageGeneration();
+            }
+        });
+
+        modeSelect.addEventListener('change', (e) => {
+            this.imageSettings.mode = e.target.value;
+            intervalSetting.style.display = e.target.value === 'periodic' ? 'flex' : 'none';
+            
+            this.stopImageGeneration();
+            if (this.imageSettings.enabled && e.target.value === 'periodic') {
+                this.startImageGeneration();
+            }
+        });
+
+        intervalInput.addEventListener('change', (e) => {
+            this.imageSettings.interval_seconds = Math.max(5, parseInt(e.target.value) || 30);
+            if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+                this.startImageGeneration();
+            }
+        });
+
+        // Initialize interval setting visibility
+        intervalSetting.style.display = this.imageSettings.mode === 'periodic' ? 'flex' : 'none';
+    }
+
+    startImageGeneration() {
+        this.stopImageGeneration();
+        if (this.imageSettings.mode === 'periodic') {
+            this.imageGenTimer = setInterval(() => {
+                this.generateImage();
+            }, this.imageSettings.interval_seconds * 1000);
+        }
+    }
+
+    stopImageGeneration() {
+        if (this.imageGenTimer) {
+            clearInterval(this.imageGenTimer);
+            this.imageGenTimer = null;
+        }
+    }
+
+    async generateImage() {
+        if (!this.imageSettings.enabled || Date.now() - this.lastImageGeneration < 5000) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/image/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: "Generate based on current context" })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate image');
+            }
+
+            const data = await response.json();
+            if (data.image_url) {
+                this.updateImage(data.image_url);
+                this.lastImageGeneration = Date.now();
+            }
+        } catch (error) {
+            console.error('Failed to generate image:', error);
+        }
     }
 
     handleInputKeydown(e) {
@@ -115,11 +208,17 @@ class StoryApp {
                 if (llm_response.keywords) {
                     this.updateKeywords(llm_response.keywords);
                 }
+                
+                // Generate image after chat if enabled
+                if (this.imageSettings.enabled && this.imageSettings.mode === 'after_chat') {
+                    await this.generateImage();
+                }
             }
             
-            // Update image
+            // Update image if provided directly
             if (image && image.image_url) {
                 this.updateImage(image.image_url);
+                this.lastImageGeneration = Date.now();
             }
 
         } catch (error) {

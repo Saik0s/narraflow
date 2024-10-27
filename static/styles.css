@@ -69,6 +69,45 @@ body {
 
 .image-reactions {
     margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.image-settings {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.toggle input {
+    margin-right: 0.5rem;
+}
+
+#image-gen-mode {
+    padding: 0.25rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#interval-setting {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#interval-setting input {
+    width: 60px;
+    padding: 0.25rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
 }
 
 .reaction {
