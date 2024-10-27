@@ -30,23 +30,154 @@ document.addEventListener('alpine:init', () => {
       this.keywords = [];
       this.selectedKeywords = [];
       this.currentInput = '';
+      this.selectedAuthor = '';
       this.saveState();
+    },
+
+    setupAuthorSelector() {
+      const authorSelector = document.getElementById('author-selector');
+      if (!authorSelector) return;
+
+      const defaultAuthors = ['narrator', 'system', '']; // '' represents 'Direct'
+      defaultAuthors.forEach(author => {
+        const label = document.createElement('label');
+        label.className = `join-item btn btn-sm flex-1 ${author === this.selectedAuthor ? 'btn-active' : ''}`;
+
+        const btn = document.createElement('input');
+        btn.type = 'radio';
+        btn.name = 'author';
+        btn.value = author;
+        btn.id = `author-${author || 'direct'}`;
+        btn.className = 'hidden';
+        btn.checked = author === this.selectedAuthor;
+
+        label.htmlFor = btn.id;
+        label.textContent = author || 'Direct';
+
+        btn.addEventListener('change', () => {
+          this.selectedAuthor = author;
+          this.saveState();
+          this.updateAuthorSelectorVisuals();
+        });
+
+        label.appendChild(btn);
+        authorSelector.appendChild(label);
+      });
+    },
+
+    updateAuthorSelector() {
+      const authorSelector = document.getElementById('author-selector');
+      if (!authorSelector) return;
+
+      const characters = new Set();
+      this.chatHistory.forEach(msg => {
+        if (msg.author && !['system', 'narrator', 'thoughts'].includes(msg.author)) {
+          characters.add(msg.author);
+        }
+      });
+
+      characters.forEach(character => {
+        if (!authorSelector.querySelector(`input[value="${character}"]`)) {
+          const label = document.createElement('label');
+          label.className = `join-item btn btn-sm flex-1 ${character === this.selectedAuthor ? 'btn-active' : ''}`;
+
+          const btn = document.createElement('input');
+          btn.type = 'radio';
+          btn.name = 'author';
+          btn.value = character;
+          btn.id = `author-${character}`;
+          btn.className = 'hidden';
+          btn.checked = character === this.selectedAuthor;
+
+          label.htmlFor = btn.id;
+          label.textContent = character;
+
+          btn.addEventListener('change', () => {
+            this.selectedAuthor = character;
+            this.saveState();
+            this.updateAuthorSelectorVisuals();
+          });
+
+          label.appendChild(btn);
+          authorSelector.appendChild(label);
+        }
+      });
+    },
+
+    updateAuthorSelectorVisuals() {
+      const authorSelector = document.getElementById('author-selector');
+      if (!authorSelector) return;
+
+      authorSelector.querySelectorAll('label').forEach(label => {
+        const input = label.querySelector('input');
+        if (input) {
+          label.classList.toggle('btn-active', input.value === this.selectedAuthor);
+        }
+      });
     },
 
     init() {
       // ... existing initialization code ...
 
-      // Handle visibility of interval setting
-      const imageGenMode = document.getElementById('image-gen-mode');
+      // Image Generation Settings
+      const imageGenEnabledCheckbox = document.getElementById('image-gen-enabled');
+      const imageGenModeSelect = document.getElementById('image-gen-mode');
+      const intervalInput = document.getElementById('interval-input');
       const intervalSetting = document.getElementById('interval-setting');
 
-      imageGenMode.addEventListener('change', (event) => {
-        if (event.target.value === 'periodic') {
-          intervalSetting.style.display = 'block';
+      // Load settings from state
+      imageGenEnabledCheckbox.checked = this.imageSettings.enabled;
+      imageGenModeSelect.value = this.imageSettings.mode;
+      intervalInput.value = this.imageSettings.interval_seconds;
+
+      // Show or hide interval setting based on mode
+      if (this.imageSettings.mode === 'periodic') {
+        intervalSetting.style.display = 'block';
+      } else {
+        intervalSetting.style.display = 'none';
+      }
+
+      // Event Listeners
+      imageGenEnabledCheckbox.addEventListener('change', (event) => {
+        this.imageSettings.enabled = event.target.checked;
+        this.saveState();
+
+        // Start or stop periodic generation if necessary
+        if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+          this.startPeriodicImageGeneration();
         } else {
-          intervalSetting.style.display = 'none';
+          this.stopPeriodicImageGeneration();
         }
       });
+
+      imageGenModeSelect.addEventListener('change', (event) => {
+        this.imageSettings.mode = event.target.value;
+        if (this.imageSettings.mode === 'periodic') {
+          intervalSetting.style.display = 'block';
+          this.startPeriodicImageGeneration();
+        } else {
+          intervalSetting.style.display = 'none';
+          this.stopPeriodicImageGeneration();
+        }
+        this.saveState();
+      });
+
+      intervalInput.addEventListener('input', (event) => {
+        this.imageSettings.interval_seconds = parseInt(event.target.value, 10);
+        this.saveState();
+
+        // Restart periodic generation with new interval
+        if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+          this.stopPeriodicImageGeneration();
+          this.startPeriodicImageGeneration();
+        }
+      });
+
+      // Start periodic generation if enabled
+      if (this.imageSettings.enabled && this.imageSettings.mode === 'periodic') {
+        this.startPeriodicImageGeneration();
+      }
+
       this.loadFromStorage();
       this.applyTheme(this.theme);
     },
@@ -90,7 +221,7 @@ document.addEventListener('alpine:init', () => {
 
     async handleSendMessage() {
       const content = this.currentInput.trim();
-      const author = this.selectedAuthor;
+      const author = this.selectedAuthor || 'User'; // Default to 'User' if none selected
 
       if (!this.isMessageValid() || this.isProcessing) return;
 
@@ -119,6 +250,8 @@ document.addEventListener('alpine:init', () => {
             this.imageSettings.mode === 'after_chat') {
             await this.handleImageGeneration();
           }
+
+          this.updateAuthorSelector();
         }
       } catch (error) {
         console.error('Failed to send message:', error);
@@ -128,17 +261,40 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    periodicImageGenerationInterval: null,
+
+    startPeriodicImageGeneration() {
+      if (this.periodicImageGenerationInterval) return;
+      this.periodicImageGenerationInterval = setInterval(() => {
+        this.handleImageGeneration();
+      }, this.imageSettings.interval_seconds * 1000);
+    },
+
+    stopPeriodicImageGeneration() {
+      if (this.periodicImageGenerationInterval) {
+        clearInterval(this.periodicImageGenerationInterval);
+        this.periodicImageGenerationInterval = null;
+      }
+    },
+
     async handleImageGeneration() {
-      if (!this.imageSettings.enabled ||
-        Date.now() - this.lastImageGeneration < 5000) {
-        return;
+      if (!this.imageSettings.enabled) return;
+
+      const now = Date.now();
+      if (this.imageSettings.mode === 'periodic') {
+        // For periodic mode, no additional checks needed
+      } else if (this.imageSettings.mode === 'after_chat') {
+        if (now - this.lastImageGeneration < 5000) {
+          // Prevent spamming in 'after_chat' mode
+          return;
+        }
       }
 
       try {
         const response = await generateImage(this.chatHistory);
         if (response?.image_url) {
           this.imageHistory.push(response.image_url);
-          this.lastImageGeneration = Date.now();
+          this.lastImageGeneration = now;
           this.saveState();
         }
       } catch (error) {
@@ -224,14 +380,15 @@ document.addEventListener('alpine:init', () => {
       return wrapper;
     },
 
-    toggleKeyword(keyword) {
-      const index = this.selectedKeywords.indexOf(keyword);
+    toggleKeyword(keywordText) {
+      const index = this.selectedKeywords.indexOf(keywordText);
       if (index === -1) {
-        this.selectedKeywords.push(keyword);
+        this.selectedKeywords.push(keywordText);
       } else {
         this.selectedKeywords.splice(index, 1);
       }
       this.saveState();
+      this.updateSendButtonState();
     },
 
     showError(message) {
