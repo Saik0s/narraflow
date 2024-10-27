@@ -1,9 +1,7 @@
-import os
 import logging
 from openai import AsyncOpenAI
 import instructor
-from app.models import LLMResponse, DialogEntry, Keyword
-import json
+from app.models import LLMResponse, Keyword, Message
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,18 +17,23 @@ async def process_chat(message: str, history: list[str]) -> LLMResponse:
     for msg in history[-10:]:  # Keep last 10 messages for context
         formatted_history.append(f"User: {msg}")
     formatted_history.append(f"User: {message}")
-    
+
     context = "\n".join(formatted_history)
 
     system_prompt = """You are an interactive storytelling assistant. Your response must follow this exact structure:
-    - thoughts: A brief context about the story progression (string)
-    - dialog: An array of speaker/text pairs where each entry has:
-        - speaker: The name of the character, "narrator", or "system"
-        - text: The actual dialogue or narration text
+    - messages: An array of message objects where each has:
+        - author: String (can be "thoughts", "narrator", "system", or a character name)
+        - content: The actual message text
     - keywords: An array of story-relevant keywords where each entry has:
         - category: One of ["action", "emotion", "object", "plot"]
         - text: The keyword text
         - weight: A float between 0 and 1 indicating importance
+
+    For messages, use:
+    - "thoughts" for meta-commentary about the story
+    - "narrator" for story narration
+    - "system" for game mechanics or instructions
+    - character names (e.g. "Alice", "Bob") for character dialogue
 
     Keep responses engaging and story-driven, ensuring all responses match the required structure exactly."""
 
@@ -38,7 +41,7 @@ async def process_chat(message: str, history: list[str]) -> LLMResponse:
         logger.info(f"Processing chat message with context length: {len(context)}")
 
         response = await client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4",
             response_model=LLMResponse,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -63,11 +66,10 @@ async def process_chat(message: str, history: list[str]) -> LLMResponse:
         logger.error(error_msg)
         # Return a graceful fallback response that matches the model structure
         return LLMResponse(
-            thoughts="Sorry, I encountered an error processing your request.",
-            dialog=[
-                DialogEntry(
-                    speaker="system",
-                    text="There was an error generating the story response. Please try again.",
+            messages=[
+                Message(
+                    author="system",
+                    content="There was an error generating the story response. Please try again.",
                 )
             ],
             keywords=[Keyword(category="plot", text="story-interrupted", weight=1.0)],

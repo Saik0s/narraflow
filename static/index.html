@@ -32,7 +32,7 @@
                         <h2 class="text-xl font-bold mb-4">Chat History</h2>
                         <div id="chat-messages" class="flex-1 overflow-y-auto"></div>
                     </div>
-                
+
                     <!-- Images Column -->
                     <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
                         <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
@@ -62,13 +62,16 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Bottom Panel -->
         <div class="bg-base-200 rounded-box shadow-lg p-4">
             <div id="keywords" class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2"></div>
-            <div class="flex gap-2">
-                <input type="text" id="message-input" placeholder="Type your message..." class="input input-bordered flex-1">
-                <button id="send-button" class="btn btn-primary" disabled>Send</button>
+            <div class="flex flex-col gap-2">
+                <!-- Author selector will be inserted here by JavaScript -->
+                <div class="flex gap-2">
+                    <input type="text" id="message-input" placeholder="Type your message..." class="input input-bordered flex-1">
+                    <button id="send-button" class="btn btn-primary" disabled>Send</button>
+                </div>
             </div>
         </div>
     </div>

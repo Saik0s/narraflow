@@ -179,16 +179,16 @@ body {
     position: relative;
 }
 
-.message.narrator-message { 
+.message.narrator-message {
     background: linear-gradient(to right, var(--plot-color) 0%, var(--message-bg) 3%);
 }
-.message.character-message { 
+.message.character-message {
     background: linear-gradient(to right, var(--action-color) 0%, var(--message-bg) 3%);
 }
-.message.system-message { 
+.message.system-message {
     background: linear-gradient(to right, var(--emotion-color) 0%, var(--message-bg) 3%);
 }
-.message.thought-message { 
+.message.thought-message {
     background: linear-gradient(to right, var(--object-color) 0%, var(--message-bg) 3%);
 }
 
@@ -423,4 +423,76 @@ thinking {
     #current-image {
         max-height: 300px;
     }
+}
+
+.message-text {
+    margin: 0.25rem 0;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.message-text.thoughts {
+    font-style: italic;
+    color: var(--thinking-color);
+    background-color: var(--thinking-bg);
+    border-left: 3px solid var(--thinking-color);
+}
+
+.message-text.narrator {
+    color: var(--text-color);
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.message-text.system {
+    color: var(--emotion-color);
+    background-color: rgba(77, 182, 172, 0.1);
+    border-left: 3px solid var(--emotion-color);
+}
+
+/* For character messages, we'll use the default styling but make them distinct */
+.message-text:not(.thoughts):not(.narrator):not(.system) {
+    color: var(--plot-color);
+    font-weight: bold;
+}
+
+.join {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    width: 100%;
+}
+
+.join-item {
+    flex: 1;
+    min-width: fit-content;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+    background: var(--message-bg);
+    color: var(--text-color);
+    text-align: center;
+    border-radius: 0.5rem;
+    user-select: none;
+}
+
+.join-item:hover {
+    background-color: var(--button-hover);
+    color: var(--button-text);
+}
+
+/* Hide radio buttons but keep them accessible */
+input[type="radio"].hidden {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Style for selected state */
+input[type="radio"]:checked + .join-item,
+.join-item:has(input[type="radio"]:checked) {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border-color: var(--button-bg);
 }

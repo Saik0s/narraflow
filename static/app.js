@@ -8,7 +8,7 @@ class StoryApp {
         this.currentImage = document.getElementById('current-image');
         this.darkModeToggle = document.getElementById('dark-mode-toggle');
         this.clearHistoryBtn = document.getElementById('clear-history');
-        
+
         this.setupEventListeners();
         this.commandHistory = [];
         this.historyIndex = -1;
@@ -16,15 +16,16 @@ class StoryApp {
         this.isProcessing = false;
         this.imageGenTimer = null;
         this.lastImageGeneration = Date.now();
-        
+
         // Image generation settings
         this.imageSettings = {
             enabled: true,
             mode: 'after_chat',
             interval_seconds: 30
         };
-        
+
         this.setupImageControls();
+        this.setupAuthorSelector();
     }
 
     setupEventListeners() {
@@ -38,7 +39,7 @@ class StoryApp {
 
         this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
         this.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
-        
+
         // Listen for system dark mode changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             this.darkModeToggle.checked = e.matches;
@@ -65,40 +66,40 @@ class StoryApp {
         console.log('Loading chat history from localStorage');
         const saved = localStorage.getItem('chatHistory');
         let history = [];
-        
+
         try {
             history = saved ? JSON.parse(saved) : [];
             console.log('Loaded chat history:', history);
-            
+
             // Restore chat messages and images from history
             history.forEach(item => {
                 if (!item || !item.id) return; // Skip invalid items
-                
+
                 if (item.type === 'image') {
                     // Restore image
                     this.updateImage(item.url, item.prompt);
                     return;
                 }
-                
+
                 // Restore message
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
                 messageDiv.dataset.id = item.id;
-                
+
                 const controls = document.createElement('div');
                 controls.className = 'edit-controls';
                 controls.innerHTML = `
                     <button onclick="app.editMessage('${item.id}')">Edit</button>
                     <button onclick="app.deleteMessage('${item.id}')">Delete</button>
                 `;
-                
+
                 if (item.thoughts) {
                     const thoughts = document.createElement('thinking');
                     thoughts.className = 'thoughts';
                     thoughts.textContent = item.thoughts;
                     messageDiv.appendChild(thoughts);
                 }
-                
+
                 if (Array.isArray(item.dialog)) {
                     item.dialog.forEach(entry => {
                         if (!entry || !entry.speaker) return; // Skip invalid dialog entries
@@ -108,7 +109,7 @@ class StoryApp {
                         messageDiv.appendChild(text);
                     });
                 }
-                
+
                 this.chatMessages.appendChild(messageDiv);
                 messageDiv.appendChild(controls);
             });
@@ -116,7 +117,7 @@ class StoryApp {
             console.error('Failed to load chat history:', error);
             history = [];
         }
-        
+
         return history;
     }
 
@@ -124,8 +125,8 @@ class StoryApp {
         try {
             console.log('Saving chat history...');
             // Filter out invalid messages before saving
-            const validHistory = this.chatHistory.filter(msg => 
-                msg && msg.id && 
+            const validHistory = this.chatHistory.filter(msg =>
+                msg && msg.id &&
                 (msg.thoughts || (Array.isArray(msg.dialog) && msg.dialog.length > 0))
             );
             console.log('Filtered valid history:', validHistory);
@@ -166,7 +167,7 @@ class StoryApp {
         modeSelect.addEventListener('change', (e) => {
             this.imageSettings.mode = e.target.value;
             intervalSetting.style.display = e.target.value === 'periodic' ? 'flex' : 'none';
-            
+
             this.stopImageGeneration();
             if (this.imageSettings.enabled && e.target.value === 'periodic') {
                 this.startImageGeneration();
@@ -260,7 +261,7 @@ class StoryApp {
         this.sendButton.disabled = loading;
         this.messageInput.disabled = loading;
         this.sendButton.innerHTML = loading ? '<span class="loading">Processing...</span>' : 'Send';
-        
+
         if (loading) {
             const loadingMessage = document.createElement('div');
             loadingMessage.className = 'message loading-message';
@@ -277,30 +278,24 @@ class StoryApp {
 
     async sendMessage() {
         const message = this.messageInput.value.trim();
-        const hasKeywords = this.selectedKeywords.size > 0;
-        
         if (!message || this.isProcessing) return;
+
+        // Get selected author
+        const selectedAuthor = document.querySelector('input[name="author"]:checked')?.value || '';
 
         this.commandHistory.unshift(message);
         this.historyIndex = -1;
-        
-        // Clear keywords after getting their values
+
         const selectedKeywordsArray = Array.from(this.selectedKeywords);
         this.selectedKeywords.clear();
-        this.keywords.innerHTML = ''; // Clear keyword display
-        
+        this.keywords.innerHTML = '';
+
         const messageObj = {
             content: message,
             timestamp: Date.now(),
             id: Date.now().toString()
         };
         this.chatHistory.push(messageObj);
-
-        let prefix = '';
-        if (message.startsWith('@')) prefix = 'character';
-        else if (message.startsWith('>')) prefix = 'narrator';
-        else if (message.startsWith('/')) prefix = 'system';
-        else if (message.startsWith('*')) prefix = 'thought';
 
         try {
             this.setLoadingState(true);
@@ -311,7 +306,7 @@ class StoryApp {
                 },
                 body: JSON.stringify({
                     message: message,
-                    prefix: prefix,
+                    author: selectedAuthor,  // Use selected author instead of prefix
                     history: this.chatHistory,
                     selected_keywords: Array.from(this.selectedKeywords)
                 })
@@ -323,14 +318,14 @@ class StoryApp {
 
             const data = await response.json();
             this.messageInput.value = '';
-            
+
             if (data.error) {
                 this.appendErrorMessage(data.error);
                 return;
             }
 
             const { llm_response } = data;
-            
+
             // Update chat messages
             if (llm_response) {
                 this.appendMessage(llm_response);
@@ -338,7 +333,7 @@ class StoryApp {
                 if (llm_response.keywords) {
                     this.updateKeywords(llm_response.keywords);
                 }
-                
+
                 // Generate image after chat if enabled
                 if (this.imageSettings.enabled && this.imageSettings.mode === 'after_chat') {
                     await this.generateImage();
@@ -363,10 +358,9 @@ class StoryApp {
 
     appendMessage(response) {
         const messageDiv = document.createElement('div');
-        const messageType = this.getMessageType(response);
-        messageDiv.className = `message ${messageType}-message card`;
+        messageDiv.className = 'message card';
         messageDiv.dataset.id = Date.now().toString();
-        
+
         const controls = document.createElement('div');
         controls.className = 'edit-controls';
         controls.innerHTML = `
@@ -377,46 +371,46 @@ class StoryApp {
                 <i class="fas fa-trash"></i> Delete
             </button>
         `;
-        
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        
+
         // Create message object for history
         const messageObj = {
             id: messageDiv.dataset.id,
-            thoughts: response.thoughts || '',
-            dialog: response.dialog || [],
+            messages: response.messages || [],
             keywords: response.keywords || [],
             timestamp: Date.now()
         };
-        console.log('Created message object:', messageObj);
-        
+
         // Add to chat history
         this.chatHistory.push(messageObj);
-        
-        if (response.thoughts) {
-            const thoughts = document.createElement('thinking');
-            thoughts.className = 'thoughts';
-            thoughts.textContent = response.thoughts;
-            contentDiv.appendChild(thoughts);
-        }
-        
-        response.dialog.forEach(entry => {
+
+        response.messages.forEach(msg => {
             const text = document.createElement('p');
-            text.className = `dialog ${entry.speaker.toLowerCase()}`;
-            text.textContent = `${entry.speaker}: ${entry.text}`;
+            text.className = `message-text ${msg.author.toLowerCase()}`;
+
+            // Handle different author types
+            if (msg.author === 'thoughts') {
+                text.className += ' thoughts';
+            }
+
+            text.textContent = msg.author === 'thoughts' ? msg.content : `${msg.author}: ${msg.content}`;
             contentDiv.appendChild(text);
         });
-        
+
         messageDiv.appendChild(controls);
         messageDiv.appendChild(contentDiv);
         this.chatMessages.appendChild(messageDiv);
-        
+
         // Ensure smooth scroll to bottom
         requestAnimationFrame(() => {
             this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
         });
         this.saveChatHistory();
+
+        // Update author selector with any new characters
+        this.updateAuthorSelector();
     }
 
     updateKeywords(keywords) {
@@ -438,21 +432,21 @@ class StoryApp {
         const imageContainer = document.getElementById('images-container');
         const imageWrapper = document.createElement('div');
         imageWrapper.className = 'card bg-base-300 shadow-lg';
-        
+
         // Scroll container to bottom before adding new image
         const shouldScroll = imageContainer.scrollHeight - imageContainer.scrollTop === imageContainer.clientHeight;
-        
+
         const imageBody = document.createElement('div');
         imageBody.className = 'card-body p-4';
-        
+
         const image = document.createElement('img');
         image.src = imageUrl;
         image.className = 'w-full h-auto rounded-lg';
-        
+
         imageBody.appendChild(image);
         imageWrapper.appendChild(imageBody);
         imageContainer.insertBefore(imageWrapper, imageContainer.firstChild);
-        
+
         // Scroll to bottom if we were at bottom before
         if (shouldScroll) {
             imageContainer.scrollTop = imageContainer.scrollHeight;
@@ -474,7 +468,7 @@ class StoryApp {
         console.log('Keyword clicked:', keyword);
         const keywordElement = event.target;
         const isSelected = this.selectedKeywords.has(keyword.text);
-        
+
         if (isSelected) {
             console.log('Deselecting keyword:', keyword.text);
             this.selectedKeywords.delete(keyword.text);
@@ -484,7 +478,7 @@ class StoryApp {
             this.selectedKeywords.add(keyword.text);
             keywordElement.classList.add('selected');
         }
-        
+
         // Update send button state after keyword selection changes
         this.updateSendButtonState();
     }
@@ -496,24 +490,24 @@ class StoryApp {
 
         const currentContent = messageDiv.querySelector('.dialog').textContent;
         messageDiv.classList.add('editing');
-        
+
         const editInput = document.createElement('textarea');
         editInput.className = 'edit-input';
         editInput.value = currentContent;
-        
+
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Save';
         saveButton.onclick = () => this.saveEdit(messageId, editInput.value);
-        
+
         const cancelButton = document.createElement('button');
         cancelButton.textContent = 'Cancel';
         cancelButton.onclick = () => this.cancelEdit(messageId);
-        
+
         const editControls = document.createElement('div');
         editControls.className = 'edit-controls';
         editControls.appendChild(saveButton);
         editControls.appendChild(cancelButton);
-        
+
         messageDiv.appendChild(editInput);
         messageDiv.appendChild(editControls);
     }
@@ -555,13 +549,13 @@ class StoryApp {
     }
 
     getMessageType(response) {
-        if (!response.dialog || response.dialog.length === 0) return 'system';
-        const firstDialog = response.dialog[0];
-        
-        switch(firstDialog.speaker.toLowerCase()) {
+        if (!response.messages || response.messages.length === 0) return 'system';
+        const firstMessage = response.messages[0];
+
+        switch(firstMessage.author.toLowerCase()) {
             case 'narrator': return 'narrator';
             case 'system': return 'system';
-            case 'thought': return 'thought';
+            case 'thoughts': return 'thought';
             default: return 'character';
         }
     }
@@ -574,6 +568,94 @@ class StoryApp {
 
     updateSendButtonState() {
         this.sendButton.disabled = !this.isMessageValid() || this.isProcessing;
+    }
+
+    // Add this method to StoryApp class
+    setupAuthorSelector() {
+        const authorSelector = document.createElement('div');
+        authorSelector.className = 'join w-full mb-2';  // Added w-full and mb-2
+        authorSelector.id = 'author-selector';
+
+        // Default options
+        const defaultAuthors = ['', 'system', 'narrator'];
+        defaultAuthors.forEach(author => {
+            // Create a label first
+            const label = document.createElement('label');
+            label.className = 'join-item btn btn-sm flex-1';  // Added flex-1 for equal width
+
+            // Create radio input
+            const btn = document.createElement('input');
+            btn.type = 'radio';
+            btn.name = 'author';
+            btn.value = author;
+            btn.id = `author-${author || 'direct'}`;  // Add unique ID
+            btn.className = 'hidden';  // Hide the radio button
+
+            // Set label's for attribute and text
+            label.htmlFor = btn.id;
+            label.textContent = author || 'Direct';
+
+            // Add click handler to the label
+            label.addEventListener('click', () => {
+                btn.checked = true;
+            });
+
+            // Append in correct order
+            label.appendChild(btn);
+            authorSelector.appendChild(label);
+        });
+
+        // Insert before the input container
+        const bottomPanel = document.querySelector('.flex.flex-col.gap-2');
+        bottomPanel.insertBefore(authorSelector, bottomPanel.firstChild);
+    }
+
+    updateAuthorSelector() {
+        const authorSelector = document.getElementById('author-selector');
+        if (!authorSelector) return;
+
+        // Get unique character names from chat history
+        const characters = new Set();
+        this.chatHistory.forEach(msg => {
+            if (msg.messages) {
+                msg.messages.forEach(m => {
+                    if (m.author && !['system', 'narrator', 'thoughts'].includes(m.author)) {
+                        characters.add(m.author);
+                    }
+                });
+            }
+        });
+
+        // Update selector with current characters
+        const existingAuthors = new Set(Array.from(authorSelector.querySelectorAll('input')).map(i => i.value));
+        characters.forEach(character => {
+            if (!existingAuthors.has(character)) {
+                // Create label first
+                const label = document.createElement('label');
+                label.className = 'join-item btn btn-sm flex-1';
+
+                // Create radio input
+                const btn = document.createElement('input');
+                btn.type = 'radio';
+                btn.name = 'author';
+                btn.value = character;
+                btn.id = `author-${character}`;
+                btn.className = 'hidden';
+
+                // Set label's for attribute and text
+                label.htmlFor = btn.id;
+                label.textContent = character;
+
+                // Add click handler to the label
+                label.addEventListener('click', () => {
+                    btn.checked = true;
+                });
+
+                // Append in correct order
+                label.appendChild(btn);
+                authorSelector.appendChild(label);
+            }
+        });
     }
 }
 
