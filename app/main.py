@@ -108,10 +108,10 @@ async def generate_image_endpoint(comfyGen: ComfyWorkflowRequest):
         prompt = await generate_prompt(ImageGenerationRequest(**comfyGen.model_dump()))
         workflow_json = json.dumps(comfyGen.workflow)
         workflow_json = workflow_json.replace(
-            comfyGen.positivePromptPlaceholder, prompt.positive
+            comfyGen.positivePromptPlaceholder, json.dumps(prompt.positive)[1:-1]
         )
         workflow_json = workflow_json.replace(
-            comfyGen.negativePromptPlaceholder, prompt.negative
+            comfyGen.negativePromptPlaceholder, json.dumps(prompt.negative)[1:-1]
         )
         urls = await generate_image_comfy(workflow_json)
         logger.info(f"Generated image response: {urls}")
