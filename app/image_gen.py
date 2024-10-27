@@ -128,7 +128,9 @@ async def generate_prompt(imageGen: ImageGenerationRequest) -> ImagePrompt:
             response_model=ImagePromptDetails,
         )
 
-        logger.info(f"Generated structured prompt: {prompt}")
+        logger.info(
+            f"Generated structured prompt: {prompt.to_prompt().model_dump_json(include=2)}"
+        )
         return prompt.to_prompt()
 
     except Exception as e:
