@@ -24,6 +24,44 @@ document.addEventListener('alpine:init', () => {
     },
     currentlyEditingMessageIndex: null,
     editingContent: '',
+
+    startEditing(index) {
+      this.currentlyEditingMessageIndex = index;
+      this.editingContent = this.chatHistory[index].content;
+      // Focus the textarea after it's rendered
+      this.$nextTick(() => {
+        const textarea = document.querySelector('.chat [data-id="' + index + '"] textarea');
+        if (textarea) {
+          textarea.focus();
+        }
+      });
+    },
+
+    saveEdit() {
+      if (this.currentlyEditingMessageIndex === null) return;
+      
+      // Trim the content and check if it's not empty
+      const trimmedContent = this.editingContent.trim();
+      if (!trimmedContent) {
+        this.cancelEdit();
+        return;
+      }
+
+      // Update the message
+      this.chatHistory[this.currentlyEditingMessageIndex].content = trimmedContent;
+      
+      // Reset editing state
+      this.currentlyEditingMessageIndex = null;
+      this.editingContent = '';
+      
+      // Save to storage
+      this.saveState();
+    },
+
+    cancelEdit() {
+      this.currentlyEditingMessageIndex = null;
+      this.editingContent = '';
+    },
     selectedAuthor: 'narrator',
     currentInput: '',
     imageSettings: {
