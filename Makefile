@@ -19,6 +19,9 @@ install:
 dev:
 	poetry run uvicorn app.main:app --reload
 
+prod:
+	poetry run python -m app.main
+
 lint:
 	pylint app
 
