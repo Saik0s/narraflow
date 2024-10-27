@@ -21,8 +21,12 @@ document.addEventListener('alpine:init', () => {
     config: {
       storytellerPrompt: localStorage.getItem('storytellerPrompt') || '',
       imagePrompt: localStorage.getItem('imagePrompt') || '',
+      comfyWorkflow: localStorage.getItem('comfyWorkflow') || '{\n  \n}',
+      positivePromptPlaceholder: localStorage.getItem('positivePromptPlaceholder') || '{positive_prompt}',
+      negativePromptPlaceholder: localStorage.getItem('negativePromptPlaceholder') || '{negative_prompt}',
       savedConfigs: JSON.parse(localStorage.getItem('savedConfigs')) || [],
-      selectedConfigIndex: -1
+      selectedConfigIndex: -1,
+      editor: null
     },
     currentlyEditingMessageIndex: null,
     editingContent: '',
@@ -238,31 +242,28 @@ document.addEventListener('alpine:init', () => {
     },
 
     saveConfig() {
-      // Save current state to localStorage
       localStorage.setItem('storytellerPrompt', this.config.storytellerPrompt);
       localStorage.setItem('imagePrompt', this.config.imagePrompt);
+      localStorage.setItem('comfyWorkflow', this.config.comfyWorkflow);
+      localStorage.setItem('positivePromptPlaceholder', this.config.positivePromptPlaceholder);
+      localStorage.setItem('negativePromptPlaceholder', this.config.negativePromptPlaceholder);
       this.closeConfig();
     },
 
     addNewConfig() {
-      // Get the next configuration number
       const nextConfigNum = this.config.savedConfigs.length + 1;
-
-      // Create new configuration object
       const newConfig = {
         id: nextConfigNum,
         name: `Configuration ${nextConfigNum}`,
         storytellerPrompt: this.config.storytellerPrompt,
-        imagePrompt: this.config.imagePrompt
+        imagePrompt: this.config.imagePrompt,
+        comfyWorkflow: this.config.comfyWorkflow,
+        positivePromptPlaceholder: this.config.positivePromptPlaceholder,
+        negativePromptPlaceholder: this.config.negativePromptPlaceholder
       };
-
-      // Add to saved configs
+      
       this.config.savedConfigs.push(newConfig);
-
-      // Save to localStorage
       localStorage.setItem('savedConfigs', JSON.stringify(this.config.savedConfigs));
-
-      // Select the new config
       this.config.selectedConfigIndex = this.config.savedConfigs.length - 1;
     },
 
@@ -272,7 +273,51 @@ document.addEventListener('alpine:init', () => {
         if (selectedConfig) {
           this.config.storytellerPrompt = selectedConfig.storytellerPrompt;
           this.config.imagePrompt = selectedConfig.imagePrompt;
+          this.config.comfyWorkflow = selectedConfig.comfyWorkflow;
+          this.config.positivePromptPlaceholder = selectedConfig.positivePromptPlaceholder;
+          this.config.negativePromptPlaceholder = selectedConfig.negativePromptPlaceholder;
+          
+          // Update editor content if it exists
+          if (this.config.editor) {
+            this.config.editor.setValue(this.config.comfyWorkflow);
+          }
         }
+      }
+    },
+
+    initMonacoEditor() {
+      require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
+      require(['vs/editor/editor.main'], () => {
+        this.config.editor = monaco.editor.create(document.getElementById('workflow-editor'), {
+          value: this.config.comfyWorkflow,
+          language: 'json',
+          theme: this.theme === 'dark' ? 'vs-dark' : 'vs',
+          automaticLayout: true,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          fontSize: 14,
+          lineNumbers: 'on',
+          renderLineHighlight: 'all',
+          formatOnPaste: true,
+          formatOnType: true
+        });
+
+        // Add listener for content changes
+        this.config.editor.onDidChangeModelContent(() => {
+          this.config.comfyWorkflow = this.config.editor.getValue();
+        });
+      });
+    },
+
+    formatWorkflow() {
+      try {
+        const parsed = JSON.parse(this.config.comfyWorkflow);
+        this.config.comfyWorkflow = JSON.stringify(parsed, null, 2);
+        if (this.config.editor) {
+          this.config.editor.setValue(this.config.comfyWorkflow);
+        }
+      } catch (e) {
+        this.showError('Invalid JSON');
       }
     },
 

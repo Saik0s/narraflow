@@ -247,6 +247,25 @@ img:not(.lazy) {
   opacity: 1;
 }
 
+/* Monaco editor container */
+#workflow-editor {
+    min-height: 300px;
+    border: 1px solid hsl(var(--b3));
+    border-radius: 0.5rem;
+}
+
+/* Adjust modal max height for larger screens */
+.modal-box.max-w-4xl {
+    max-height: 90vh;
+    width: 90vw;
+}
+
+/* Add scrolling to modal content if needed */
+.modal-box .form-control {
+    max-height: calc(90vh - 8rem);
+    overflow-y: auto;
+}
+
 /* Ensure the dropdown stays visible while hovering */
 .dropdown:hover .dropdown-content {
     visibility: visible;

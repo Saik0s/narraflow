@@ -20,6 +20,7 @@
   <!-- Load app.js first -->
   <script type="module" src="{{ url_for('static', path='js/app.js') }}"></script>
   <!-- Then load Alpine.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Add this line after the other CSS links -->
@@ -332,25 +333,70 @@
           </button>
         </div>
 
-        <!-- Existing form fields -->
-        <div>
-          <label class="label">
-            <span class="label-text">Storyteller System Prompt</span>
-          </label>
-          <textarea
-            x-model="$store.app.config.storytellerPrompt"
-            class="textarea textarea-bordered h-24 w-full"
-            placeholder="Enter system prompt for the storyteller..."></textarea>
+        <!-- System Prompts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="label">
+              <span class="label-text">Storyteller System Prompt</span>
+            </label>
+            <textarea
+              x-model="$store.app.config.storytellerPrompt"
+              class="textarea textarea-bordered h-24 w-full"
+              placeholder="Enter system prompt for the storyteller..."></textarea>
+          </div>
+
+          <div>
+            <label class="label">
+              <span class="label-text">Image Generator System Prompt</span>
+            </label>
+            <textarea
+              x-model="$store.app.config.imagePrompt"
+              class="textarea textarea-bordered h-24 w-full"
+              placeholder="Enter system prompt for the image generator..."></textarea>
+          </div>
+        </div>
+
+        <!-- ComfyUI Workflow Settings -->
+        <div class="divider">ComfyUI Workflow Settings</div>
+      
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="label">
+              <span class="label-text">Positive Prompt Placeholder</span>
+            </label>
+            <input
+              type="text"
+              x-model="$store.app.config.positivePromptPlaceholder"
+              class="input input-bordered w-full"
+              placeholder="e.g. {positive_prompt}">
+          </div>
+
+          <div>
+            <label class="label">
+              <span class="label-text">Negative Prompt Placeholder</span>
+            </label>
+            <input
+              type="text"
+              x-model="$store.app.config.negativePromptPlaceholder"
+              class="input input-bordered w-full"
+              placeholder="e.g. {negative_prompt}">
+          </div>
         </div>
 
         <div>
           <label class="label">
-            <span class="label-text">Image Generator System Prompt</span>
+            <span class="label-text">Workflow JSON</span>
+            <button 
+              class="btn btn-xs btn-ghost"
+              @click="$store.app.formatWorkflow()">
+              Format JSON
+            </button>
           </label>
-          <textarea
-            x-model="$store.app.config.imagePrompt"
-            class="textarea textarea-bordered h-24 w-full"
-            placeholder="Enter system prompt for the image generator..."></textarea>
+          <div 
+            id="workflow-editor" 
+            class="h-96 border rounded-lg overflow-hidden"
+            x-init="$store.app.initMonacoEditor()">
+          </div>
         </div>
       </div>
 
