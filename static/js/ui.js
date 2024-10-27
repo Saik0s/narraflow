@@ -229,6 +229,11 @@ export class UI {
       imageWrapper.appendChild(imageBody);
       this.elements.imageContainer.appendChild(imageWrapper);
     });
+
+    // Add auto-scroll after rendering images
+    requestAnimationFrame(() => {
+      this.elements.imageContainer.scrollTop = this.elements.imageContainer.scrollHeight;
+    });
   }
 
   // Update keywords rendering
