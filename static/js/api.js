@@ -1,6 +1,7 @@
 export async function sendMessage(content, author, history, selectedKeywords) {
   try {
-    console.log('Making API request:', { content, author, history, selectedKeywords });
+    const storytellerPrompt = localStorage.getItem('storytellerPrompt') || '';
+    console.log('Making API request:', { content, author, history, selectedKeywords, storytellerPrompt });
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -10,7 +11,8 @@ export async function sendMessage(content, author, history, selectedKeywords) {
         content,
         author,
         history,
-        selectedKeywords
+        selectedKeywords,
+        systemPrompt: storytellerPrompt
       })
     });
 
@@ -28,6 +30,7 @@ export async function sendMessage(content, author, history, selectedKeywords) {
 
 export async function generateImage(history) {
   try {
+    const imagePrompt = localStorage.getItem('imagePrompt') || '';
     console.log('Requesting image generation');
     const response = await fetch('/api/image/generate', {
       method: 'POST',
@@ -36,6 +39,7 @@ export async function generateImage(history) {
       },
       body: JSON.stringify({
         history: history,
+        systemPrompt: imagePrompt
       })
     });
 

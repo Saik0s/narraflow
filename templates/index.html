@@ -57,6 +57,17 @@
 
         <div class="divider divider-horizontal"></div>
 
+        <!-- Config button -->
+        <button class="btn btn-ghost" @click="$store.app.openConfig()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Configure
+        </button>
+
+        <div class="divider divider-horizontal"></div>
+
         <!-- Theme toggle -->
         <label class="swap swap-rotate">
           <input type="checkbox" class="theme-controller" x-model="$store.app.theme" :checked="$store.app.theme === 'dark'" @change="
@@ -147,6 +158,41 @@
     </div>
   </div>
 
+  <!-- Configuration Modal -->
+  <div x-show="$store.app.showConfigModal" 
+       class="modal modal-open"
+       @click.self="$store.app.closeConfig()">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">System Configuration</h3>
+      
+      <div class="form-control gap-4">
+        <div>
+          <label class="label">
+            <span class="label-text">Storyteller System Prompt</span>
+          </label>
+          <textarea 
+            x-model="$store.app.config.storytellerPrompt" 
+            class="textarea textarea-bordered h-24 w-full"
+            placeholder="Enter system prompt for the storyteller..."></textarea>
+        </div>
+
+        <div>
+          <label class="label">
+            <span class="label-text">Image Generator System Prompt</span>
+          </label>
+          <textarea 
+            x-model="$store.app.config.imagePrompt" 
+            class="textarea textarea-bordered h-24 w-full"
+            placeholder="Enter system prompt for the image generator..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button class="btn btn-primary" @click="$store.app.saveConfig()">Save</button>
+        <button class="btn" @click="$store.app.closeConfig()">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

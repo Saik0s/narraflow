@@ -15,6 +15,11 @@ document.addEventListener('alpine:init', () => {
     historyIndex: -1,
     isProcessing: false,
     lastImageGeneration: 0,
+    showConfigModal: false,
+    config: {
+      storytellerPrompt: localStorage.getItem('storytellerPrompt') || '',
+      imagePrompt: localStorage.getItem('imagePrompt') || ''
+    },
     currentlyEditingMessageIndex: null,
     selectedAuthor: 'narrator',
     currentInput: '',
@@ -147,9 +152,26 @@ document.addEventListener('alpine:init', () => {
           Object.assign(this, parsed);
           console.log('Loaded state:', parsed);
         }
+        // Load config separately
+        this.config.storytellerPrompt = localStorage.getItem('storytellerPrompt') || '';
+        this.config.imagePrompt = localStorage.getItem('imagePrompt') || '';
       } catch (error) {
         console.error('Failed to load state:', error);
       }
+    },
+
+    openConfig() {
+      this.showConfigModal = true;
+    },
+
+    closeConfig() {
+      this.showConfigModal = false;
+    },
+
+    saveConfig() {
+      localStorage.setItem('storytellerPrompt', this.config.storytellerPrompt);
+      localStorage.setItem('imagePrompt', this.config.imagePrompt);
+      this.closeConfig();
     },
 
     saveState() {

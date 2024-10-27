@@ -50,6 +50,7 @@ class NewChatMessage(BaseModel):
     author: str
     history: List[Message] = Field(default_factory=list)  # Updated field definition
     selectedKeywords: List[str] = Field(default_factory=list)
+    systemPrompt: Optional[str] = Field(default="")
 
     class Config:
         from_attributes = True
@@ -57,6 +58,7 @@ class NewChatMessage(BaseModel):
 
 class ImageGenerationRequest(BaseModel):
     history: List[Message]
+    systemPrompt: Optional[str] = Field(default="")
 
     class Config:
         from_attributes = True
