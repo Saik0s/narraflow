@@ -60,7 +60,11 @@
 
         <!-- Theme toggle -->
         <label class="swap swap-rotate">
-          <input type="checkbox" class="theme-controller" value="system" {% if initial_state and initial_state.theme=='dark' %}checked{% endif %} />
+          <input type="checkbox" 
+                 class="theme-controller" 
+                 value="system"
+                 x-model="$store.app.theme === 'dark'"
+                 @change="$store.app.setTheme($event.target.checked ? 'dark' : 'light')" />
 
           <!-- sun icon -->
           <svg class="swap-on fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
