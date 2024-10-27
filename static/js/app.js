@@ -551,6 +551,87 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
+    showSuccess(message) {
+      const notification = document.createElement('div');
+      notification.className = 'toast toast-top toast-end';
+      notification.innerHTML = `
+        <div class="alert alert-success">
+          <span>${message}</span>
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    },
+
+    exportConfig() {
+      const config = {
+        storytellerPrompt: this.config.storytellerPrompt,
+        imagePrompt: this.config.imagePrompt,
+        comfyWorkflow: this.config.comfyWorkflow,
+        positivePromptPlaceholder: this.config.positivePromptPlaceholder,
+        negativePromptPlaceholder: this.config.negativePromptPlaceholder,
+        savedConfigs: this.config.savedConfigs
+      };
+      
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'story-config.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
+    async importConfig() {
+      try {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          const text = await file.text();
+          const config = JSON.parse(text);
+          
+          // Validate config structure
+          const requiredFields = ['storytellerPrompt', 'imagePrompt', 'comfyWorkflow', 
+                                'positivePromptPlaceholder', 'negativePromptPlaceholder'];
+          
+          const missingFields = requiredFields.filter(field => !(field in config));
+          if (missingFields.length > 0) {
+            throw new Error(`Invalid config file. Missing fields: ${missingFields.join(', ')}`);
+          }
+          
+          // Update config
+          this.config.storytellerPrompt = config.storytellerPrompt;
+          this.config.imagePrompt = config.imagePrompt;
+          this.config.comfyWorkflow = config.comfyWorkflow;
+          this.config.positivePromptPlaceholder = config.positivePromptPlaceholder;
+          this.config.negativePromptPlaceholder = config.negativePromptPlaceholder;
+          
+          // Update saved configs if present
+          if (config.savedConfigs) {
+            this.config.savedConfigs = config.savedConfigs;
+          }
+          
+          // Update Monaco editor
+          window.editor.setValue(this.config.comfyWorkflow);
+          
+          // Show success message
+          this.showSuccess('Configuration imported successfully');
+        };
+        
+        input.click();
+      } catch (error) {
+        console.error('Failed to import config:', error);
+        this.showError(`Failed to import config: ${error.message}`);
+      }
+    },
+
     isMessageValid() {
       return this.currentInput || this.selectedKeywords.length > 0;
     },
