@@ -36,9 +36,3 @@ async def generate_image(prompt: ImagePrompt) -> ImageResponse:
         return ImageResponse(
             image_url="https://via.placeholder.com/512x512.png?text=Error+Generating+Image"
         )
-
-
-async def process_reaction(image_id: str, reaction: str):
-    """Store reaction for future prompt improvements"""
-    logger.info(f"Reaction {reaction} received for image {image_id}")
-    # TODO: Implement reaction storage for improving future prompts

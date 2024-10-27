@@ -32,10 +32,6 @@ class ImagePrompt(BaseModel):
 class ImageResponse(BaseModel):
     image_url: str
 
-class ImageReaction(BaseModel):
-    image_id: str
-    reaction: Literal["like", "dislike", "style"]
-
 class ImageGenSettings(BaseModel):
     enabled: bool
     mode: Literal["after_chat", "periodic", "manual"]

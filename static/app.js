@@ -35,10 +35,6 @@ class StoryApp {
         });
         this.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
         this.messageInput.addEventListener('input', () => this.updateSendButtonState());
-        
-        document.querySelectorAll('.reaction').forEach(button => {
-            button.addEventListener('click', () => this.handleReaction(button.dataset.reaction));
-        });
 
         this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
         this.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
@@ -462,25 +458,6 @@ class StoryApp {
         this.updateSendButtonState();
     }
 
-    async handleReaction(reaction) {
-        try {
-            const response = await fetch('/api/image/reaction', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    image_id: this.currentImage.src,
-                    reaction: reaction
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to send reaction');
-            }
-        } catch (error) {
-            console.error('Failed to send reaction:', error);
-            this.appendErrorMessage('Failed to send image reaction');
-        }
-    }
 
     editMessage(messageId) {
         const messageDiv = this.chatMessages.querySelector(`[data-id="${messageId}"]`);

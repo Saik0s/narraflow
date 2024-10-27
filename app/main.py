@@ -47,16 +47,6 @@ async def generate_image_endpoint(prompt: ImagePrompt):
         logger.error(f"Error generating image: {str(e)}")
         return {"error": f"Error generating image: {str(e)}"}, 500
 
-@app.post("/api/image/reaction")
-async def image_reaction(reaction: ImageReaction):
-    try:
-        logger.info(f"Processing image reaction: {reaction.reaction}")
-        await process_reaction(reaction.image_id, reaction.reaction)
-        return {"status": "success"}
-    except Exception as e:
-        logger.error(f"Error processing image reaction: {str(e)}")
-        return {"status": "error", "message": str(e)}
-
 
 
 if __name__ == "__main__":
