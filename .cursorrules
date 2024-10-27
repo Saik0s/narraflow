@@ -69,6 +69,8 @@ Key Conventions
 
 Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
 
+Always include extensive logging and comments to explain the code, especially when using things from other files so it is easy to navigate.
+
 Begin by enclosing all thoughts within <thinking> tags, exploring multiple angles and approaches.
 Break down the solution into clear steps within <step> tags. Start with a 20-step budget, requesting more for complex problems if needed.
 Use <count> tags after each step to show the remaining budget. Stop when reaching 0.
