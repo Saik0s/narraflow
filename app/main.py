@@ -2,9 +2,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
-from app.models import LLMMessage, NewChatMessage, ImagePrompt, Message
+from app.models import LLMMessage, NewChatMessage, ImageGenerationRequest, Message
 from app.llm import process_chat
-from app.image_gen import generate_image
+from app.image_gen import generate_image, generate_prompt
 import logging
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
@@ -54,7 +54,18 @@ async def chat(chat_message: NewChatMessage):
         logger.info(f"Generated response: {response}")
 
         response.messages.insert(
-            0, LLMMessage(author=chat_message.author, content=chat_message.content)
+            0,
+            LLMMessage(
+                author=chat_message.author,
+                content=(
+                    f"{chat_message.content}"
+                    + (
+                        f'\n\n* Selected Keywords: {", ".join(chat_message.selectedKeywords)} *'
+                        if chat_message.selectedKeywords
+                        else ""
+                    )
+                ).strip(),
+            ),
         )
 
         return {
@@ -69,9 +80,10 @@ async def chat(chat_message: NewChatMessage):
 
 
 @app.post("/api/image/generate")
-async def generate_image_endpoint(prompt: ImagePrompt):
+async def generate_image_endpoint(imageGen: ImageGenerationRequest):
     try:
-        logger.info(f"Received image generation request: {prompt}")
+        logger.info(f"Received image generation request: {imageGen}")
+        prompt = await generate_prompt(imageGen.history)
         image_response = await generate_image(prompt)
         logger.info(f"Generated image response: {image_response}")
         return image_response

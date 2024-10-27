@@ -1,6 +1,4 @@
 export async function sendMessage(content, author, history, selectedKeywords) {
-  if (!content) return;
-
   try {
     console.log('Making API request:', { content, author, history, selectedKeywords });
     const response = await fetch('/api/chat', {

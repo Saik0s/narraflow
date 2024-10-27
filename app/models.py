@@ -38,9 +38,9 @@ class ImageData(BaseModel):
 
 
 class Message(BaseModel):
-    content: str
     author: str
-
+    content: str
+    # Add any other fields your Message model needs
     class Config:
         from_attributes = True
 
@@ -55,8 +55,11 @@ class NewChatMessage(BaseModel):
         from_attributes = True
 
 
-class ImagePrompt(BaseModel):
+class ImageGenerationRequest(BaseModel):
     history: List[Message]
+
+    class Config:
+        from_attributes = True
 
 
 class ImageResponse(BaseModel):

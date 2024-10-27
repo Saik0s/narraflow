@@ -101,3 +101,48 @@
 #chat-messages > div {
     flex-shrink: 0;
 }
+
+/* Add these styles for the carousel */
+.carousel-vertical {
+  display: flex;
+  flex-direction: column;
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  gap: 1rem;
+  padding: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.carousel-vertical .carousel-item {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  min-height: min(400px, 70vh);
+}
+
+/* Customize scrollbar */
+.carousel-vertical::-webkit-scrollbar {
+  width: 6px;
+}
+
+.carousel-vertical::-webkit-scrollbar-track {
+  background: hsl(var(--b2));
+  border-radius: 3px;
+}
+
+.carousel-vertical::-webkit-scrollbar-thumb {
+  background: hsl(var(--bc) / 0.3);
+  border-radius: 3px;
+}
+
+.carousel-vertical::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--bc) / 0.5);
+}
+
+/* Image transitions */
+.image-carousel-item img {
+  transition: transform 0.3s ease-in-out;
+}
+
+.image-carousel-item:hover img {
+  transform: scale(1.02);
+}

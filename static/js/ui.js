@@ -210,30 +210,42 @@ export class UI {
 
   // Update image rendering
   renderImages() {
-    if (!this.elements.imageContainer) return;
+    const container = this.elements.imageContainer;
 
-    this.elements.imageContainer.innerHTML = '';
+    // Get existing images
+    const existingImages = container.querySelectorAll('.image-carousel-item');
+    const existingUrls = Array.from(existingImages).map(wrapper => wrapper.dataset.imageUrl);
 
+    // Add new images
     appState.imageHistory.forEach(imageUrl => {
-      const imageWrapper = document.createElement('div');
-      imageWrapper.className = 'card bg-base-200 shadow-xl';
+      if (!existingUrls.includes(imageUrl)) {
+        const carouselItem = document.createElement('div');
+        carouselItem.className = 'carousel-item h-auto w-full';
+        carouselItem.dataset.imageUrl = imageUrl;
 
-      const imageBody = document.createElement('div');
-      imageBody.className = 'card-body p-4';
+        const image = document.createElement('img');
+        image.src = imageUrl;
+        image.className = 'rounded-box opacity-0 transition-opacity duration-300';
 
-      const image = document.createElement('img');
-      image.src = imageUrl;
-      image.className = 'w-full h-auto rounded-lg';
+        // Handle image load
+        image.onload = () => {
+          image.classList.remove('opacity-0');
+        };
 
-      imageBody.appendChild(image);
-      imageWrapper.appendChild(imageBody);
-      this.elements.imageContainer.appendChild(imageWrapper);
+        carouselItem.appendChild(image);
+        container.appendChild(carouselItem);
+      }
     });
 
-    // Add auto-scroll after rendering images
-    requestAnimationFrame(() => {
-      this.elements.imageContainer.scrollTop = this.elements.imageContainer.scrollHeight;
-    });
+    // Scroll to the latest image
+    if (appState.imageHistory.length > 0) {
+      requestAnimationFrame(() => {
+        const lastImage = container.lastElementChild;
+        if (lastImage) {
+          lastImage.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
   }
 
   // Update keywords rendering
@@ -243,36 +255,36 @@ export class UI {
     this.elements.keywords.innerHTML = '';
 
     appState.keywords.forEach(keyword => {
-        // Create wrapper div for the form control
-        const wrapper = document.createElement('div');
-        wrapper.className = 'form-control';
+      // Create wrapper div for the form control
+      const wrapper = document.createElement('div');
+      wrapper.className = 'form-control';
 
-        // Create label container
-        const label = document.createElement('label');
-        label.className = 'label cursor-pointer gap-2 bg-base-200 rounded-full px-4 py-2 hover:bg-base-300 transition-colors';
+      // Create label container
+      const label = document.createElement('label');
+      label.className = 'label cursor-pointer gap-2 bg-base-200 rounded-full px-4 py-2 hover:bg-base-300 transition-colors';
 
-        // Create keyword text span
-        const span = document.createElement('span');
-        span.className = `label-text text-${keyword.category}`;
-        span.textContent = keyword.text;
+      // Create keyword text span
+      const span = document.createElement('span');
+      span.className = `label-text text-${keyword.category}`;
+      span.textContent = keyword.text;
 
-        // Create checkbox input
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'checkbox checkbox-sm checkbox-primary';
-        checkbox.checked = appState.selectedKeywords.includes(keyword.text);
+      // Create checkbox input
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'checkbox checkbox-sm checkbox-primary';
+      checkbox.checked = appState.selectedKeywords.includes(keyword.text);
 
-        // Add event listener to checkbox
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation(); // Prevent label click from triggering twice
-            this.handleKeywordClick(keyword);
-        });
+      // Add event listener to checkbox
+      checkbox.addEventListener('change', (e) => {
+        e.stopPropagation(); // Prevent label click from triggering twice
+        this.handleKeywordClick(keyword);
+      });
 
-        // Assemble the elements
-        label.appendChild(span);
-        label.appendChild(checkbox);
-        wrapper.appendChild(label);
-        this.elements.keywords.appendChild(wrapper);
+      // Assemble the elements
+      label.appendChild(span);
+      label.appendChild(checkbox);
+      wrapper.appendChild(label);
+      this.elements.keywords.appendChild(wrapper);
     });
   }
 
@@ -461,7 +473,7 @@ export class UI {
   setupAuthorSelector() {
     if (!this.elements.authorSelector) return;
 
-    const defaultAuthors = ['', 'system', 'narrator'];
+    const defaultAuthors = ['narrator', 'system', ''];
     defaultAuthors.forEach(author => {
       const label = document.createElement('label');
       label.className = `join-item btn btn-sm flex-1 ${author === appState.selectedAuthor ? 'btn-active' : ''}`;
