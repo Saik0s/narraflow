@@ -7,9 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body data-theme="light" class="min-h-screen bg-base-100 overflow-hidden">
-    <div class="h-screen p-4 flex flex-col gap-4">
-        <div class="navbar bg-base-200 rounded-box">
+<body data-theme="light" class="min-h-screen bg-base-100">
+    <div class="container mx-auto p-4 flex flex-col gap-4 h-screen max-h-screen">
+        <!-- Header -->
+        <div class="navbar bg-base-200 rounded-box shadow-lg">
             <div class="flex-1">
                 <button id="clear-history" class="btn btn-ghost">Clear History</button>
             </div>
@@ -21,17 +22,20 @@
                 </label>
             </div>
         </div>
-        <div class="card bg-base-200 shadow-xl flex-1 min-h-0">
-            <div class="card-body grid grid-cols-2 gap-4 p-4 h-full">
-                <!-- Chat Column -->
-                <div class="border-r border-base-300 p-4">
-                    <div id="chat-messages" class="h-full overflow-y-auto pr-4"></div>
-                </div>
+        <!-- Main Content -->
+        <div class="card bg-base-200 shadow-xl flex-1 min-h-0 overflow-hidden">
+            <div class="card-body h-full p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                    <!-- Chat Column -->
+                    <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+                        <h2 class="text-xl font-bold mb-4">Chat History</h2>
+                        <div id="chat-messages" class="flex-1 overflow-y-auto"></div>
+                    </div>
                 
-                <!-- Images Column -->
-                <div class="p-4">
-                    <h2 class="card-title mb-4">Story Visualization</h2>
-                    <div id="images-container" class="overflow-y-auto max-h-[600px] space-y-4">
+                    <!-- Images Column -->
+                    <div class="bg-base-100 rounded-lg p-4 h-full flex flex-col">
+                        <h2 class="text-xl font-bold mb-4">Story Visualization</h2>
+                        <div id="images-container" class="flex-1 overflow-y-auto space-y-4">
                         <p class="text-base-content/70">Visual interpretations of the story will appear here as you chat...</p>
                     </div>
                     <div class="image-controls mt-4 card bg-base-200 p-4">
@@ -58,11 +62,12 @@
             </div>
         </div>
         
-        <div class="mt-auto">
-            <div id="keywords" class="flex flex-wrap gap-2 p-4 bg-base-200 rounded-box mb-4"></div>
-            <div class="join w-full">
-                <input type="text" id="message-input" placeholder="Type your message..." class="input input-bordered join-item flex-1">
-                <button id="send-button" class="btn btn-primary join-item">Send</button>
+        <!-- Bottom Panel -->
+        <div class="bg-base-200 rounded-box shadow-lg p-4">
+            <div id="keywords" class="flex flex-wrap gap-2 mb-4 min-h-[50px] bg-base-100 rounded-lg p-2"></div>
+            <div class="flex gap-2">
+                <input type="text" id="message-input" placeholder="Type your message..." class="input input-bordered flex-1">
+                <button id="send-button" class="btn btn-primary">Send</button>
             </div>
         </div>
     </div>
