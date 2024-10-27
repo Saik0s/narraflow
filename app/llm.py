@@ -2,6 +2,7 @@ import logging
 from anthropic import AsyncAnthropic
 import instructor
 from app.models import LLMResponse, LLMKeyword, LLMMessage, NewChatMessage
+from app.utils import history_to_messages
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,13 +16,7 @@ async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
     """
     Process a chat message and generate a response
     """
-    messages = []
-    if chat_data.history:
-        starting_role = "assistant" if len(chat_data.history) % 2 == 0 else "user"
-        for i, msg in enumerate(chat_data.history):
-            role = "user" if (i % 2 == 0) == (starting_role == "user") else "assistant"
-            content = f"{msg.author}: {msg.content}" if msg.author else msg.content
-            messages.append({"role": role, "content": content})
+    messages = history_to_messages(chat_data.history)
 
     # Add current message
     current_content = chat_data.content
@@ -34,21 +29,7 @@ async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
         }
     )
 
-    system_prompt = """You are an interactive storytelling assistant. Your response must follow this exact structure:
-    - messages: An array of message objects where each has:
-        - author: String (can be "thoughts", "narrator", "system", or a character name)
-        - content: The actual message text
-    - keywords: An array of story-relevant keywords where each entry has:
-        - category: One of ["action", "emotion", "object", "plot"]
-        - text: The keyword text
-
-    For messages, use:
-    - "thoughts" for meta-commentary about the story
-    - "narrator" for story narration
-    - "system" for game mechanics or instructions
-    - character names (e.g. "Alice", "Bob") for character dialogue
-
-    Keep responses engaging and story-driven, ensuring all responses match the required structure exactly."""
+    system_prompt = "You are an interactive storytelling assistant. Continue the story. Keep responses engaging and story-driven."
 
     try:
         logger.info(f"Processing chat message with {len(messages)} messages")

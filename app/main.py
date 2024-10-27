@@ -41,17 +41,11 @@ async def root(request: Request):
 @app.post("/api/chat")
 async def chat(chat_message: NewChatMessage):
     try:
-        logger.info(f"Received chat request: {chat_message}")
-
-        # Ensure history is properly converted to Message objects
-        validated_history = [
-            Message(author=msg.author, content=msg.content)
-            for msg in chat_message.history
-        ]
-        chat_message.history = validated_history
+        logger.info(f"Received chat request: {chat_message.model_dump_json(indent=2)}")
 
         response = await process_chat(chat_message)
-        logger.info(f"Generated response: {response}")
+
+        logger.info(f"Generated response: {response.model_dump_json(indent=2)}")
 
         response.messages.insert(
             0,
