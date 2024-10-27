@@ -77,7 +77,7 @@ async def chat(chat_message: NewChatMessage):
 async def generate_image_endpoint(imageGen: ImageGenerationRequest):
     try:
         logger.info(f"Received image generation request: {imageGen}")
-        prompt = await generate_prompt(imageGen.history)
+        prompt = await generate_prompt(imageGen)
         image_response = await generate_image(prompt)
         logger.info(f"Generated image response: {image_response}")
         return image_response

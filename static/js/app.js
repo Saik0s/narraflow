@@ -247,6 +247,10 @@ document.addEventListener('alpine:init', () => {
     startPeriodicImageGeneration() {
       if (this.periodicImageGenerationInterval) return;
       this.periodicImageGenerationInterval = setInterval(() => {
+        if (this.imageSettings.mode === 'after_chat') {
+          stopPeriodicImageGeneration();
+          return;
+        }
         this.handleImageGeneration();
       }, this.imageSettings.interval_seconds * 1000);
     },

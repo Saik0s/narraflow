@@ -29,7 +29,10 @@ async def process_chat(chat_data: NewChatMessage) -> LLMResponse:
         }
     )
 
-    system_prompt = "You are an interactive storytelling assistant. Continue the story. Keep responses engaging and story-driven."
+    system_prompt = (
+        chat_data.systemPrompt
+        or "You are an interactive storytelling assistant. Continue the story. Keep responses engaging and story-driven."
+    )
 
     try:
         logger.info(f"Processing chat message with {len(messages)} messages")

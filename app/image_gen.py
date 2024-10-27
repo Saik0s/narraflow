@@ -4,7 +4,7 @@ import instructor
 from anthropic import AsyncAnthropic
 from typing import List
 from pydantic import BaseModel, Field
-from app.models import ImageResponse, Message
+from app.models import ImageResponse, ImageGenerationRequest
 from app.utils import history_to_messages
 
 # Configure logging
@@ -28,15 +28,16 @@ class ImagePrompt(BaseModel):
 client = instructor.from_anthropic(AsyncAnthropic())
 
 
-async def generate_prompt(history: List[Message]) -> str:
+async def generate_prompt(imageGen: ImageGenerationRequest) -> str:
     """Generate an image prompt from chat history"""
     try:
         # Format messages for Claude
-        messages = history_to_messages(history)
+        messages = history_to_messages(imageGen.history)
 
-        system_prompt = """You are an expert at creating vivid image generation prompts.
-        Analyze the conversation and create a prompt that captures the latest significant
-        story development. Focus on visual elements and maintain a consistent style."""
+        system_prompt = (
+            imageGen.systemPrompt
+            or "You are an expert at creating vivid image generation prompts. Analyze the conversation and create a prompt that captures the latest significant story development. Focus on visual elements and maintain a consistent style."
+        )
 
         prompt = await client.messages.create(
             model="claude-3-5-sonnet-20241022",
