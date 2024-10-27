@@ -8,6 +8,12 @@ export class UI {
 
   init() {
     this.elements = this.initializeElements();
+    
+    // Set initial input value from state
+    if (this.elements.messageInput) {
+      this.elements.messageInput.value = appState.currentInput || '';
+    }
+    
     this.setupEventListeners();
     this.setupImageControls();
     this.setupAuthorSelector();
@@ -66,7 +72,11 @@ export class UI {
       }
     });
 
-    this.elements.messageInput.addEventListener('input', () => this.updateSendButtonState());
+    this.elements.messageInput.addEventListener('input', (e) => {
+      appState.currentInput = e.target.value.trim();
+      appState.saveState();
+      this.updateSendButtonState();
+    });
 
     // Theme handling
     this.elements.darkModeToggle?.addEventListener('change', (e) => {
@@ -89,7 +99,7 @@ export class UI {
       this.setLoadingState(true);
 
       const response = await sendMessage(
-        content, 
+        appState.currentInput, 
         author, 
         appState.chatHistory,
         appState.selectedKeywords
@@ -107,7 +117,9 @@ export class UI {
         // Update UI
         this.renderMessages();
         this.renderKeywords();
+        appState.currentInput = '';
         messageInput.value = '';
+        appState.saveState();
         this.updateSendButtonState();
 
         if (appState.imageSettings.enabled &&
@@ -566,6 +578,7 @@ export class UI {
     appState.saveState();
     this.renderKeywords();
     this.updateSendButtonState();
+    this.updateSendButtonState();
   }
 
   setLoadingState(loading) {
@@ -601,8 +614,7 @@ export class UI {
   }
 
   isMessageValid() {
-    const message = this.elements.messageInput?.value.trim();
-    return message || appState.selectedKeywords.length > 0;
+    return appState.currentInput || appState.selectedKeywords.length > 0;
   }
 
   updateSendButtonState() {

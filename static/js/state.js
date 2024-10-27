@@ -10,6 +10,7 @@ export class AppState {
     this.lastImageGeneration = 0;
     this.currentlyEditingMessageIndex = null;
     this.selectedAuthor = ''; // Add selected author tracking, default to empty string (Direct)
+    this.currentInput = ''; // Track current input value
 
     // Add image settings with defaults
     this.imageSettings = {
