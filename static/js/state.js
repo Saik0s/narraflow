@@ -30,7 +30,7 @@ export class AppState {
         }
     }
 
-    saveToStorage() {
+    saveState() {
         try {
             const state = {
                 chatHistory: this.chatHistory,
@@ -39,9 +39,35 @@ export class AppState {
                 selectedKeywords: Array.from(this.selectedKeywords)
             };
             localStorage.setItem('appState', JSON.stringify(state));
+            console.log('State saved successfully');
         } catch (error) {
             console.error('Failed to save state:', error);
         }
+    }
+
+    loadState() {
+        try {
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.chatHistory = parsed.chatHistory || [];
+                this.commandHistory = parsed.commandHistory || [];
+                this.imageSettings = parsed.imageSettings || this.imageSettings;
+                this.selectedKeywords = new Set(parsed.selectedKeywords || []);
+                console.log('State loaded successfully');
+            }
+        } catch (error) {
+            console.error('Failed to load state:', error);
+        }
+    }
+
+    clearState() {
+        this.chatHistory = [];
+        this.selectedKeywords.clear();
+        this.commandHistory = [];
+        this.historyIndex = -1;
+        localStorage.removeItem('appState');
+        console.log('State cleared successfully');
     }
 
     addMessage(message) {

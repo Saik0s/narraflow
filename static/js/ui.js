@@ -111,6 +111,124 @@ export class UI {
         }
     }
 
+    appendMessage(response) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+        messageDiv.dataset.id = Date.now().toString();
+
+        const controls = document.createElement('div');
+        controls.className = 'edit-controls';
+        controls.innerHTML = `
+            <button class="btn btn-ghost btn-sm edit-button">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-ghost btn-sm delete-button">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        `;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        response.messages.forEach(msg => {
+            const text = document.createElement('p');
+            text.className = `message-text ${msg.author.toLowerCase()}`;
+            text.textContent = msg.author === 'thoughts' ?
+                msg.content :
+                `${msg.author}: ${msg.content}`;
+            contentDiv.appendChild(text);
+        });
+
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(controls);
+        this.chatMessages.appendChild(messageDiv);
+
+        // Add event listeners for edit and delete
+        const editBtn = messageDiv.querySelector('.edit-button');
+        const deleteBtn = messageDiv.querySelector('.delete-button');
+        
+        editBtn.addEventListener('click', () => this.editMessage(messageDiv.dataset.id));
+        deleteBtn.addEventListener('click', () => this.deleteMessage(messageDiv.dataset.id));
+
+        // Scroll to bottom
+        requestAnimationFrame(() => {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        });
+
+        // Update state
+        const messageObj = {
+            id: messageDiv.dataset.id,
+            messages: response.messages || [],
+            keywords: response.keywords || [],
+            timestamp: Date.now()
+        };
+        appState.addMessage(messageObj);
+    }
+
+    editMessage(messageId) {
+        const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        const contentDiv = messageDiv.querySelector('.message-content');
+        const currentText = contentDiv.textContent;
+
+        // Create edit input
+        const editInput = document.createElement('textarea');
+        editInput.className = 'edit-input input input-bordered w-full';
+        editInput.value = currentText;
+
+        // Create save button
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-primary btn-sm mt-2';
+        saveBtn.textContent = 'Save';
+
+        // Create cancel button
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-ghost btn-sm mt-2 ml-2';
+        cancelBtn.textContent = 'Cancel';
+
+        // Save original content
+        const originalContent = contentDiv.innerHTML;
+
+        // Replace content with edit interface
+        contentDiv.innerHTML = '';
+        contentDiv.appendChild(editInput);
+        contentDiv.appendChild(saveBtn);
+        contentDiv.appendChild(cancelBtn);
+
+        // Handle save
+        saveBtn.addEventListener('click', () => {
+            const newText = editInput.value.trim();
+            if (newText) {
+                appState.updateMessage(messageId, newText);
+                this.updateMessageDisplay(messageId, newText);
+            }
+        });
+
+        // Handle cancel
+        cancelBtn.addEventListener('click', () => {
+            contentDiv.innerHTML = originalContent;
+        });
+    }
+
+    deleteMessage(messageId) {
+        if (confirm('Are you sure you want to delete this message?')) {
+            const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+            if (messageDiv) {
+                messageDiv.remove();
+                appState.deleteMessage(messageId);
+            }
+        }
+    }
+
+    updateMessageDisplay(messageId, newText) {
+        const messageDiv = document.querySelector(`[data-id="${messageId}"]`);
+        if (!messageDiv) return;
+
+        const contentDiv = messageDiv.querySelector('.message-content');
+        contentDiv.innerHTML = `<p class="message-text">${newText}</p>`;
+    }
+
     handleInputKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();

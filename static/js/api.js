@@ -61,16 +61,24 @@ export async function sendMessage(message, author) {
     }
 }
 
-export async function generateImage() {
-    if (!appState.imageSettings.enabled || Date.now() - appState.lastImageGeneration < 5000) {
+export async function generateImage(state) {
+    if (!appState.imageSettings.enabled || 
+        Date.now() - appState.lastImageGeneration < 5000) {
+        console.log('Skipping image generation - too soon or disabled');
         return;
     }
 
     try {
+        console.log('Requesting image generation');
         const response = await fetch('/api/image/generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: "Generate based on current context" })
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: "Generate based on current context",
+                state: state
+            })
         });
 
         if (!response.ok) {
@@ -78,9 +86,12 @@ export async function generateImage() {
         }
 
         const data = await response.json();
+        console.log('Received image response:', data);
+        
         if (data.image_url) {
             ui.updateImage(data.image_url);
             appState.lastImageGeneration = Date.now();
+            appState.saveState();
         }
     } catch (error) {
         console.error('Failed to generate image:', error);
