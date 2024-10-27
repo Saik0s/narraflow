@@ -1,10 +1,10 @@
 from anthropic import AsyncAnthropic
-from app.logging_config import setup_logging
+from app.logging_config import get_logger, setup_logging
 import instructor
 from app.models import LLMResponse, LLMKeyword, LLMMessage, NewChatMessage
 from app.utils import history_to_messages
 
-logger = setup_logging()
+logger = get_logger("llm")
 
 anthropic_client = AsyncAnthropic()
 client = instructor.from_anthropic(anthropic_client)

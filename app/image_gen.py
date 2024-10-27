@@ -1,5 +1,5 @@
 import fal_client
-from app.logging_config import setup_logging
+from app.logging_config import get_logger, setup_logging
 import instructor
 from anthropic import AsyncAnthropic
 from typing import List
@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from app.models import ComfyWorkflowRequest, ImageResponse, ImageGenerationRequest
 from app.utils import history_to_messages
 
-logger = setup_logging()
+logger = get_logger("image_gen")
 
 # Add MinIO client initialization at module level
 minio_client = Minio(

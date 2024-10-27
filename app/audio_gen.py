@@ -9,7 +9,11 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel
 
+from app.logging_config import get_logger
 from app.models import AudioResponse
+
+
+logger = get_logger("audio_gen")
 
 
 async def generate_audio(text: str) -> AudioResponse:
