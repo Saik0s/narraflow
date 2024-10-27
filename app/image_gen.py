@@ -14,20 +14,12 @@ async def generate_image(prompt: ImagePrompt) -> ImageResponse:
     try:
         logger.info(f"Generating image with prompt: {prompt.prompt}")
 
-        async def on_queue_update(update):
-            """Handle queue status updates"""
-            if "status" in update:
-                logger.info(f"Queue status: {update['status']}")
-            if "progress" in update:
-                logger.info(f"Generation progress: {update['progress']:.0%}")
-
         # Subscribe to real-time updates with new model
         result = await fal_client.subscribe_async(
             "fal-ai/flux/schnell",
             arguments={
                 "prompt": prompt.prompt,
             },
-            on_queue_update=on_queue_update,
         )
 
         if not result or "images" not in result:
